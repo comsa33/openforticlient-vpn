@@ -6,6 +6,10 @@
   "engines": {
     "vscode": "^1.99.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/comsa33/openforticlient-vpn.git"
+  },
   "categories": [
     "Other"
   ],
@@ -15,11 +19,11 @@
     "commands": [
       {
         "command": "openfortivpn-connector.toggle",
-        "title": "OpenFortiVPN: 연결/해제 토글"
+        "title": "OpenFortiVPN: Toggle Connect/Disconnect"
       },
       {
         "command": "openfortivpn-connector.config",
-        "title": "OpenFortiVPN: 설정"
+        "title": "OpenFortiVPN: Configure VPN"
       }
     ],
     "configuration": {
@@ -28,17 +32,17 @@
         "openfortivpn-connector.host": {
           "type": "string",
           "default": "",
-          "description": "VPN 게이트웨이 호스트"
+          "description": "VPN Gateway Host"
         },
         "openfortivpn-connector.port": {
           "type": "string",
           "default": "443",
-          "description": "VPN 게이트웨이 포트"
+          "description": "VPN Gateway Port"
         },
         "openfortivpn-connector.username": {
           "type": "string",
           "default": "",
-          "description": "VPN 사용자 이름"
+          "description": "VPN Username"
         }
       }
     }
