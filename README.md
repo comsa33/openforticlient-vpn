@@ -1,71 +1,69 @@
-# openfortivpn-connector README
+# OpenFortiVPN Connector
 
-This is the README for your extension "openfortivpn-connector". After writing up a brief description, we recommend including the following sections.
+OpenFortiVPN Connector is an extension that allows you to easily manage Fortinet VPN connections within Visual Studio Code. This extension uses the `openfortivpn` command-line tool to set up and manage VPN connections directly from the VS Code editor.
 
-## Features
+## Key Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- Check VPN connection status in VS Code status bar
+- Simple one-click VPN connection/disconnection
+- Manage VPN settings (host, port, username)
+- Automatic connection status monitoring
 
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+![OpenFortiVPN Connector Preview](images/openfortivpn-connector.png)
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- Linux or macOS operating system
+- `openfortivpn` command-line tool must be installed
+  - Ubuntu/Debian: `sudo apt install openfortivpn`
+  - macOS: `brew install openfortivpn`
+- Administrator privileges (sudo) are required
+
+## Installation
+
+Install by searching for "OpenFortiVPN Connector" in the VS Code extension marketplace or download directly from the [Visual Studio Code Marketplace](https://marketplace.visualstudio.com).
+
+## How to Use
+
+1. Open the VS Code command palette (Ctrl+Shift+P or Cmd+Shift+P) and select "OpenFortiVPN: Settings".
+2. Enter the VPN gateway host, port, and username.
+3. Click the "VPN: Disconnected" icon in the status bar or select "OpenFortiVPN: Toggle Connection" from the command palette to connect to VPN.
+4. You will be prompted to enter your password when connecting.
+5. When connected, the status bar icon will change to "VPN: Connected".
+6. Click the icon again to disconnect from the VPN.
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+This extension provides the following settings:
 
-For example:
+* `openfortivpn-connector.host`: VPN gateway host address
+* `openfortivpn-connector.port`: VPN gateway port (default: 443)
+* `openfortivpn-connector.username`: VPN account username
 
-This extension contributes the following settings:
+Settings can be changed through the VS Code settings UI or extension commands.
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+## Troubleshooting
 
-## Known Issues
+### If Connection Fails
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+1. Verify that the `openfortivpn` tool is properly installed.
+2. Test if the openfortivpn command runs directly in the terminal.
+3. Confirm that the host, port, and username are correct.
+4. Make sure you've entered the correct password as administrator privileges (sudo) are required.
 
-## Release Notes
+### If VPN Status Is Not Displayed Correctly
 
-Users appreciate release notes as you update your extension.
+1. Try restarting VS Code.
+2. Check if the ppp0 interface exists using the `ip addr` or `ifconfig` command in the terminal.
 
-### 1.0.0
+## License
 
-Initial release of ...
+This extension is distributed under the MIT license. See the `LICENSE` file for details.
 
-### 1.0.1
+## Contributing
 
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+Bug reports, feature requests, or code contributions can be made through the [GitHub repository](https://github.com/yourusername/openfortivpn-connector).
 
 ---
 
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+**Note**: This extension is not affiliated with Fortinet and is not an official Fortinet product. `openfortivpn` is a third-party open source tool.
