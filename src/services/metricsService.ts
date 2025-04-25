@@ -43,6 +43,7 @@ export class MetricsService {
     private _onMetricsChanged: vscode.EventEmitter<VpnConnectionMetrics | null> = new vscode.EventEmitter<VpnConnectionMetrics | null>();
     private _logger: LogService;
     private _profileManager: any = null; // Will store ProfileManager instance
+    private _refreshIntervalListener: vscode.Disposable | null = null;
     
     /**
      * Event that fires when metrics are updated
@@ -54,8 +55,67 @@ export class MetricsService {
         this._metrics = this._loadMetrics();
         this._logger = LogService.getInstance();
         this._logger.log('Metrics Service initialized');
+        
+        // 설정 변경 감지를 위한 리스너 추가
+        this._refreshIntervalListener = vscode.workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration('openfortivpn-connector.metricsRefreshInterval')) {
+                this._updateRefreshInterval();
+            }
+        });
     }
     
+    /**
+     * 현재 설정된 메트릭 수집 주기(초) 가져오기
+     */
+    private _getRefreshInterval(): number {
+        const config = vscode.workspace.getConfiguration('openfortivpn-connector');
+        const interval = config.get<number>('metricsRefreshInterval', 5);
+        
+        // 1-60초 범위로 제한
+        return Math.max(1, Math.min(60, interval));
+    }
+
+    /**
+     * 설정 변경 시 수집 주기 업데이트
+     */
+    private _updateRefreshInterval(): void {
+        // 이미 활성화된 수집이 있는 경우만 갱신
+        if (this._metricsInterval && this._metrics.activeConnection) {
+            const currentProfile = this._metrics.activeConnection.profileId;
+            const profile = this._getProfileById(currentProfile);
+            
+            // 기존 인터벌 중지
+            clearInterval(this._metricsInterval);
+            
+            // 새 인터벌 시작
+            const intervalSeconds = this._getRefreshInterval();
+            this._logger.log(`Updating metrics collection interval to ${intervalSeconds} seconds`);
+            this._metricsInterval = setInterval(() => this._collectMetrics(), intervalSeconds * 1000);
+        }
+    }
+
+    /**
+     * 프로필 ID로 프로필 정보 가져오기
+     */
+    private async _getProfileById(profileId: string): Promise<VpnProfile | undefined> {
+        if (this._profileManager) {
+            const allProfiles = this._profileManager.getProfiles();
+            return allProfiles.profiles.find((p: VpnProfile) => p.id === profileId);
+        }
+        
+        // ProfileManager가 없는 경우 명령 사용
+        try {
+            const profiles = await vscode.commands.executeCommand('openfortivpn-connector.getProfiles') as { profiles: VpnProfile[] };
+            if (profiles && 'profiles' in profiles) {
+                return profiles.profiles.find((p: VpnProfile) => p.id === profileId);
+            }
+        } catch (err) {
+            this._logger.log(`Error getting profile with ID ${profileId}: ${err}`);
+        }
+        
+        return undefined;
+    }
+
     /**
      * Get the metrics service instance (Singleton pattern)
      */
@@ -109,10 +169,18 @@ export class MetricsService {
      * Start collecting metrics for a VPN connection
      */
     public startMetricsCollection(profile: VpnProfile): void {
+        // 이미 동일한 프로필에 대한 활성 연결이 있는지 확인
+        if (this._metrics.activeConnection && 
+            this._metrics.activeConnection.isActive && 
+            this._metrics.activeConnection.profileId === profile.id) {
+            this._logger.log(`Metrics collection already active for profile: ${profile.name}`);
+            return;
+        }
+        
         // Clear any existing collection interval
         this.stopMetricsCollection();
         
-        // Create a new connection metrics object
+        // 새 연결 메트릭 객체 생성 (기존 코드 유지)
         const startTime = Date.now();
         const connectionId = generateConnectionId();
         
@@ -133,10 +201,13 @@ export class MetricsService {
         this._previousBytesDown = 0;
         this._lastUpdateTime = startTime;
         
-        this._logger.log(`Started metrics collection for VPN connection: ${connectionId}`);
+        // 설정에서 갱신 주기 가져오기
+        const intervalSeconds = this._getRefreshInterval();
         
-        // Start the metrics collection interval
-        this._metricsInterval = setInterval(() => this._collectMetrics(), 1000);
+        this._logger.log(`Started metrics collection for VPN connection: ${connectionId} (refresh interval: ${intervalSeconds}s)`);
+        
+        // 설정된 주기로 메트릭 수집 인터벌 설정
+        this._metricsInterval = setInterval(() => this._collectMetrics(), intervalSeconds * 1000);
         
         // Emit the metrics changed event
         this._onMetricsChanged.fire(this._metrics.activeConnection);
@@ -293,8 +364,9 @@ export class MetricsService {
             }
             
             try {
-                // Parse the output to find the VPN interface (ppp0)
+                // Parse the output to find the VPN interface (ppp0 or tun0)
                 const lines = stdout.split('\n');
+                
                 const pppLine = lines.find(line => 
                     line.includes('ppp0') || 
                     line.match(/\bppp0\b/) || 
@@ -304,6 +376,7 @@ export class MetricsService {
                 
                 if (!pppLine) {
                     // No VPN interface found, might be disconnected
+                    this._logger.log('No VPN interface (ppp0/tun0) found in network data');
                     return;
                 }
                 
@@ -312,15 +385,13 @@ export class MetricsService {
                 let bytesUp = 0;
                 
                 if (pppLine.includes('ppp0')) {
-                    // Linux format: 
-                    // ppp0: 1234 56 78 9 10 11 12 13    1234 56 78 9 10 11 12 13
+                    // Linux format
                     const parts = pppLine.trim().split(/\s+/);
                     bytesDown = parseInt(parts[1], 10) || 0;
                     bytesUp = parseInt(parts[9], 10) || 0;
                 } else {
-                    // macOS format (more complex, needs more parsing)
+                    // macOS format
                     const parts = pppLine.trim().split(/\s+/);
-                    // Find the index containing "Ibytes" and "Obytes"
                     const headerLine = lines[0] || '';
                     const headers = headerLine.trim().split(/\s+/);
                     const ibytesIndex = headers.findIndex(h => h.includes('Ibytes'));
@@ -444,13 +515,13 @@ export class MetricsService {
                 this._previousBytesDown = bytesDown;
                 this._lastUpdateTime = currentTime;
                 
-                // Emit the metrics changed event
-                this._onMetricsChanged.fire(activeConnection);
-            } catch (err) {
-                this._logger.error('Error parsing network metrics', err);
-            }
-        });
-    }
+            // Emit the metrics changed event
+            this._onMetricsChanged.fire(activeConnection);
+        } catch (err) {
+            this._logger.error('Error parsing network metrics', err);
+        }
+    });
+}
     
     /**
      * Clear all metrics data
@@ -488,10 +559,16 @@ export class MetricsService {
         };
     }
     
+    
     /**
-     * Dispose the metrics service
+     * Release resources
      */
     public dispose(): void {
         this.stopMetricsCollection();
+        
+        if (this._refreshIntervalListener) {
+            this._refreshIntervalListener.dispose();
+            this._refreshIntervalListener = null;
+        }
     }
 }

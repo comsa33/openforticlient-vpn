@@ -389,16 +389,19 @@ export class VpnService {
                     this.updateStatusBar();
                     this._logger.log('OpenFortiVPN connection has been established.', true);
                     
-                    // Get active profile to start metrics collection
-                    vscode.commands.executeCommand<VpnProfile>('openfortivpn-connector.getActiveProfile')
-                        .then(profile => {
-                            if (profile) {
-                                this._metricsService.startMetricsCollection(profile);
-                            }
-                        }, err => {
-                            // Error handling in the same .then() call rather than using .catch()
-                            this._logger.error('Error getting active profile for metrics', err);
-                        });
+                    const activeMetrics = this._metricsService.getActiveMetrics();
+                    if (!activeMetrics || !activeMetrics.isActive) {
+                        // Get active profile to start metrics collection
+                        vscode.commands.executeCommand<VpnProfile>('openfortivpn-connector.getActiveProfile')
+                            .then(profile => {
+                                if (profile) {
+                                    this._logger.log('Starting metrics collection from VPN status check');
+                                    this._metricsService.startMetricsCollection(profile);
+                                }
+                            }, err => {
+                                this._logger.error('Error getting active profile for metrics', err);
+                            });
+                    }
                     
                     // Notify status change
                     this._onStatusChanged.fire(true);

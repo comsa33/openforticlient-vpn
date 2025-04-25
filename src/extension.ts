@@ -6,7 +6,7 @@ import { LogService } from './services/logService';
 import { MetricsService } from './services/metricsService';
 import { createStatusBarItem } from './ui/statusBar';
 import { registerProfilesView } from './ui/profilesView';
-import { MetricsViewProvider } from './ui/metricsView';
+import { registerMetricsView } from './ui/metricsTreeView';
 import { registerCommands } from './commands';
 
 /**
@@ -38,19 +38,8 @@ export async function activate(context: vscode.ExtensionContext) {
     // Register profile view in activity bar
     registerProfilesView(context, profileManager, vpnService);
         
-    // Register metrics view in activity bar
-    const metricsViewProvider = new MetricsViewProvider(context.extensionUri);
-    context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider(
-            MetricsViewProvider.viewType,
-            metricsViewProvider,
-            {
-                webviewOptions: {
-                    retainContextWhenHidden: true
-                }
-            }
-        )
-    );
+    // Register metrics view in activity bar (트리 뷰 구현으로 변경)
+    registerMetricsView(context, metricsService);
     
     // Register commands
     registerCommands(context, profileManager, vpnService);
@@ -60,14 +49,6 @@ export async function activate(context: vscode.ExtensionContext) {
     if (hasMigrated) {
         logger.log('Existing VPN settings have been migrated to the new profiles system.', true);
     }
-    
-    // Register profile explorer view
-    context.subscriptions.push(
-        vscode.window.registerTreeDataProvider(
-            'openfortivpnProfiles',
-            new (require('./ui/profilesView').ProfilesProvider)(profileManager, vpnService)
-        )
-    );
     
     // Dispose LogService and MetricsService when extension is deactivated
     context.subscriptions.push({

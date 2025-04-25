@@ -102,6 +102,11 @@
         "icon": "$(graph)"
       },
       {
+        "command": "openfortivpn-connector.refreshMetrics",
+        "title": "OpenFortiVPN: Refresh Metrics",
+        "icon": "$(refresh)"
+      },
+      {
         "command": "openfortivpn-connector.clearMetrics",
         "title": "OpenFortiVPN: Clear Connection Metrics",
         "icon": "$(clear-all)"
@@ -156,14 +161,19 @@
           "group": "navigation@3"
         },
         {
-          "command": "openfortivpn-connector.clearMetrics",
+          "command": "openfortivpn-connector.refreshMetrics",
           "when": "view == openfortivpnMetrics",
           "group": "navigation@1"
         },
         {
-          "command": "openfortivpn-connector.exportMetrics",
+          "command": "openfortivpn-connector.clearMetrics",
           "when": "view == openfortivpnMetrics",
           "group": "navigation@2"
+        },
+        {
+          "command": "openfortivpn-connector.exportMetrics",
+          "when": "view == openfortivpnMetrics",
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [
@@ -225,6 +235,13 @@
           "type": "string",
           "default": "",
           "description": "VPN Username (Legacy setting - use profiles instead)"
+        },
+        "openfortivpn-connector.metricsRefreshInterval": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "maximum": 60,
+          "description": "Interval (in seconds) for refreshing VPN connection metrics (1-60)"
         }
       }
     }
