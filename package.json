@@ -3,7 +3,7 @@
   "icon": "images/openfortivpn-connector.png",
   "displayName": "OpenFortiVPN Connector",
   "description": "A VS Code extension to manage and connect to Fortinet VPNs using openfortivpn.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "publisher": "RuoLee",
   "license": "MIT",
   "engines": {
@@ -37,11 +37,19 @@
     "commands": [
       {
         "command": "openfortivpn-connector.toggle",
-        "title": "OpenFortiVPN: Toggle Connect/Disconnect"
+        "title": "OpenFortiVPN: Toggle Connection"
       },
       {
         "command": "openfortivpn-connector.config",
-        "title": "OpenFortiVPN: Configure VPN"
+        "title": "OpenFortiVPN: Configure"
+      },
+      {
+        "command": "openfortivpn-connector.savePassword",
+        "title": "OpenFortiVPN: Save Password"
+      },
+      {
+        "command": "openfortivpn-connector.clearPassword",
+        "title": "OpenFortiVPN: Clear Saved Password"
       }
     ],
     "configuration": {
@@ -80,16 +88,17 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.99.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
+    "@types/vscode": "^1.99.0",
     "@typescript-eslint/eslint-plugin": "^8.28.0",
     "@typescript-eslint/parser": "^8.28.0",
-    "eslint": "^9.23.0",
-    "esbuild": "^0.25.1",
-    "npm-run-all": "^4.1.5",
-    "typescript": "^5.8.2",
     "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1"
+    "@vscode/test-electron": "^2.4.1",
+    "esbuild": "^0.25.1",
+    "eslint": "^9.23.0",
+    "npm-run-all": "^4.1.5",
+    "sinon": "^20.0.0",
+    "typescript": "^5.8.2"
   }
 }

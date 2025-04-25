@@ -6,6 +6,9 @@ let vpnProcess: cp.ChildProcess | undefined;
 let statusBarItem: vscode.StatusBarItem;
 let isConnected = false;
 
+// Password key for SecretStorage
+const VPN_PASSWORD_KEY = 'openfortivpn-password';
+
 export function activate(context: vscode.ExtensionContext) {
     console.log('OpenFortiVPN Connector has been activated.');
 
@@ -25,16 +28,53 @@ export function activate(context: vscode.ExtensionContext) {
     // Register toggle command
     let toggleCommand = vscode.commands.registerCommand('openfortivpn-connector.toggle', () => {
         if (isConnected) {
-            disconnectVPN();
+            disconnectVPN(context);
         } else {
-            connectVPN();
+            connectVPN(context);
         }
     });
 
-    context.subscriptions.push(configCommand, toggleCommand);
+    // Register password commands
+    let savePasswordCommand = vscode.commands.registerCommand('openfortivpn-connector.savePassword', async () => {
+        await managePassword(context, 'save');
+    });
+
+    let clearPasswordCommand = vscode.commands.registerCommand('openfortivpn-connector.clearPassword', async () => {
+        await managePassword(context, 'clear');
+    });
+
+    context.subscriptions.push(
+        configCommand, 
+        toggleCommand, 
+        savePasswordCommand, 
+        clearPasswordCommand
+    );
 
     // Set interval for status checking
     setInterval(checkVPNStatus, 10000);
+}
+
+// Password management function
+async function managePassword(context: vscode.ExtensionContext, action: 'save' | 'clear' | 'get'): Promise<string | undefined> {
+    if (action === 'clear') {
+        await context.secrets.delete(VPN_PASSWORD_KEY);
+        vscode.window.showInformationMessage('VPN password has been cleared.');
+        return undefined;
+    } else if (action === 'save') {
+        const password = await vscode.window.showInputBox({
+            prompt: 'Enter your VPN password to save securely',
+            password: true
+        });
+        
+        if (password) {
+            await context.secrets.store(VPN_PASSWORD_KEY, password);
+            vscode.window.showInformationMessage('VPN password has been saved securely.');
+        }
+        return password;
+    } else {
+        // Get the password
+        return context.secrets.get(VPN_PASSWORD_KEY);
+    }
 }
 
 // VPN configuration function
@@ -74,11 +114,20 @@ async function configureVPN() {
         await config.update('username', username, vscode.ConfigurationTarget.Global);
     }
     
+    // Ask if user wants to save password
+    const savePassword = await vscode.window.showQuickPick(['Yes', 'No'], {
+        placeHolder: 'Do you want to save your VPN password securely?'
+    });
+    
+    if (savePassword === 'Yes') {
+        await vscode.commands.executeCommand('openfortivpn-connector.savePassword');
+    }
+    
     vscode.window.showInformationMessage('OpenFortiVPN configuration has been saved.');
 }
 
 // VPN connection function
-async function connectVPN() {
+async function connectVPN(context: vscode.ExtensionContext) {
     // Check configuration
     const config = vscode.workspace.getConfiguration('openfortivpn-connector');
     const host = config.get('host') as string;
@@ -99,14 +148,29 @@ async function connectVPN() {
         }
     }
     
-    // Enter password
-    const password = await vscode.window.showInputBox({
-        prompt: 'Enter the VPN password',
-        password: true
-    });
+    // Try to get saved password
+    let password = await managePassword(context, 'get');
     
+    // If no saved password, ask for it
     if (!password) {
-        return; // User canceled
+        password = await vscode.window.showInputBox({
+            prompt: 'Enter the VPN password',
+            password: true
+        });
+        
+        if (!password) {
+            return; // User canceled
+        }
+        
+        // Ask if user wants to save this password
+        const savePassword = await vscode.window.showQuickPick(['Yes', 'No'], {
+            placeHolder: 'Save this password for future connections?'
+        });
+        
+        if (savePassword === 'Yes') {
+            await context.secrets.store(VPN_PASSWORD_KEY, password);
+            vscode.window.showInformationMessage('Password saved for future connections.');
+        }
     }
     
     try {
@@ -116,19 +180,18 @@ async function connectVPN() {
         const terminal = vscode.window.createTerminal('OpenFortiVPN');
         terminal.show();
         
-        // Method 1: Handle password in two steps
-        terminal.sendText(`sudo openfortivpn ${hostWithPort} -u ${username}`);
+        // Use expect-like approach for automating the password input
+        const script = `
+        echo '${password}' | sudo -S openfortivpn ${hostWithPort} -u ${username}
+        `;
         
-        // Delay slightly to allow password prompt to appear
-        setTimeout(() => {
-            terminal.sendText(password);
-        }, 1000);
+        terminal.sendText(script);
         
         // Update status
         isConnected = true;
         statusBarItem.text = "$(shield) VPN: Connecting...";
         
-        // Start connection check (allow more time after password input)
+        // Start connection check
         setTimeout(checkVPNStatus, 5000);
         
         vscode.window.showInformationMessage('Attempting to connect to OpenFortiVPN...');
@@ -138,14 +201,36 @@ async function connectVPN() {
 }
 
 // VPN disconnection function
-function disconnectVPN() {
+function disconnectVPN(context: vscode.ExtensionContext) {
+    disconnectVPNWithPassword(context).catch(error => {
+        vscode.window.showErrorMessage(`Failed to disconnect VPN: ${error}`);
+    });
+}
+
+// Helper function to disconnect with password
+async function disconnectVPNWithPassword(context: vscode.ExtensionContext) {
+    // Try to get saved password
+    let password = await managePassword(context, 'get');
+    
+    // If no saved password, ask for it
+    if (!password) {
+        password = await vscode.window.showInputBox({
+            prompt: 'Enter sudo password to disconnect VPN',
+            password: true
+        });
+        
+        if (!password) {
+            return; // User canceled
+        }
+    }
+    
     try {
         // Create terminal
         const terminal = vscode.window.createTerminal('OpenFortiVPN');
         terminal.show();
         
-        // Execute sudo pkill command
-        terminal.sendText('sudo pkill -SIGTERM openfortivpn');
+        // Use echo to pipe password to sudo
+        terminal.sendText(`echo '${password}' | sudo -S pkill -SIGTERM openfortivpn`);
         
         // Update status
         isConnected = false;
@@ -153,7 +238,7 @@ function disconnectVPN() {
         
         vscode.window.showInformationMessage('OpenFortiVPN has been disconnected.');
     } catch (error) {
-        vscode.window.showErrorMessage(`Failed to disconnect VPN: ${error}`);
+        throw error;
     }
 }
 
@@ -187,6 +272,13 @@ function checkVPNStatus() {
 export function deactivate() {
     // Disconnect VPN
     if (isConnected) {
-        disconnectVPN();
+        // We can't access the context here, so we'll just use the plain disconnect method
+        try {
+            const terminal = vscode.window.createTerminal('OpenFortiVPN');
+            terminal.show();
+            terminal.sendText('sudo pkill -SIGTERM openfortivpn');
+        } catch (error) {
+            console.error('Failed to disconnect VPN during deactivation', error);
+        }
     }
 }
