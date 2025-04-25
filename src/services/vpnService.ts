@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as cp from 'child_process';
 import { VpnProfile } from '../models/profile';
 import { LogService } from './logService';
+import { MetricsService } from './metricsService';
 
 /**
  * Password key for SecretStorage
@@ -19,6 +20,7 @@ export class VpnService {
     private _onStatusChanged: vscode.EventEmitter<boolean> = new vscode.EventEmitter<boolean>();
     private _currentProcess: cp.ChildProcess | null = null;
     private _logger: LogService;
+    private _metricsService: MetricsService;
     
     /**
      * Event that fires when VPN connection status changes
@@ -29,6 +31,7 @@ export class VpnService {
         this.context = context;
         this._statusBarItem = statusBarItem;
         this._logger = LogService.getInstance();
+        this._metricsService = MetricsService.getInstance(context);
         
         // Set initial status
         this.updateStatusBar();
@@ -154,6 +157,10 @@ export class VpnService {
                         this._isConnected = true;
                         this.updateStatusBar();
                         this._logger.log('VPN connection established successfully', true);
+                        
+                        // Start collecting metrics for this connection
+                        this._metricsService.startMetricsCollection(profile);
+                        
                         this._onStatusChanged.fire(true);
                     }
                 });
@@ -181,6 +188,10 @@ export class VpnService {
                     this._isConnected = false;
                     this.updateStatusBar();
                     this._logger.log('VPN connection closed', true);
+                    
+                    // Stop metrics collection
+                    this._metricsService.stopMetricsCollection();
+                    
                     this._onStatusChanged.fire(false);
                 }
                 this._currentProcess = null;
@@ -299,6 +310,9 @@ export class VpnService {
                 this._currentProcess = null;
             }
             
+            // Stop metrics collection
+            await this._metricsService.stopMetricsCollection();
+            
             // Update status
             this._isConnected = false;
             this._isConnecting = false;
@@ -360,6 +374,9 @@ export class VpnService {
                     this.updateStatusBar();
                     this._logger.log('OpenFortiVPN connection has been lost.', true);
                     
+                    // Stop metrics collection on VPN disconnection
+                    this._metricsService.stopMetricsCollection();
+                    
                     // Notify status change
                     this._onStatusChanged.fire(false);
                 }
@@ -371,6 +388,17 @@ export class VpnService {
                     this._isConnected = true;
                     this.updateStatusBar();
                     this._logger.log('OpenFortiVPN connection has been established.', true);
+                    
+                    // Get active profile to start metrics collection
+                    vscode.commands.executeCommand<VpnProfile>('openfortivpn-connector.getActiveProfile')
+                        .then(profile => {
+                            if (profile) {
+                                this._metricsService.startMetricsCollection(profile);
+                            }
+                        }, err => {
+                            // Error handling in the same .then() call rather than using .catch()
+                            this._logger.error('Error getting active profile for metrics', err);
+                        });
                     
                     // Notify status change
                     this._onStatusChanged.fire(true);

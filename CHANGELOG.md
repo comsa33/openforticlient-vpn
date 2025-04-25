@@ -5,6 +5,14 @@ All notable changes to the "openfortivpn-connector" extension will be documented
 ## [1.1.4] - 2025-04-26
 
 ### Added
+- **Connection Metrics and Statistics**
+  - Real-time connection speed monitoring (upload/download)
+  - Connection duration tracking
+  - Data usage statistics (total upload/download)
+  - Interactive graphs for connection speed visualization
+  - Historical connection sessions with detailed statistics
+  - New "VPN Connection Metrics" view in the activity bar
+  - Export metrics data to JSON files for further analysis
 - Connection logging functionality with detailed connection status information
 - New "Show Connection Logs" command to view detailed connection logs
 - Background connection mode (no terminal windows opening for connections)
@@ -15,6 +23,7 @@ All notable changes to the "openfortivpn-connector" extension will be documented
 - Improved VPN connection/disconnection process to work in the background
 - Enhanced error handling and user feedback
 - More detailed logging of connection events in Output panel
+- Modern UI design for connection metrics with interactive elements
 
 ## [1.1.3] - 2025-04-25
 

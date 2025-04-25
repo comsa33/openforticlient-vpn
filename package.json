@@ -95,6 +95,21 @@
         "command": "openfortivpn-connector.showLogs",
         "title": "OpenFortiVPN: Show Connection Logs",
         "icon": "$(output)"
+      },
+      {
+        "command": "openfortivpn-connector.showMetrics",
+        "title": "OpenFortiVPN: Show Connection Metrics",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "openfortivpn-connector.clearMetrics",
+        "title": "OpenFortiVPN: Clear Connection Metrics",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "openfortivpn-connector.exportMetrics",
+        "title": "OpenFortiVPN: Export Connection Metrics",
+        "icon": "$(export)"
       }
     ],
     "viewsContainers": {
@@ -111,6 +126,10 @@
         {
           "id": "openfortivpnProfiles",
           "name": "VPN Profiles"
+        },
+        {
+          "id": "openfortivpnMetrics",
+          "name": "VPN Connection Metrics"
         }
       ]
     },
@@ -135,6 +154,16 @@
           "command": "openfortivpn-connector.showLogs",
           "when": "view == openfortivpnProfiles",
           "group": "navigation@3"
+        },
+        {
+          "command": "openfortivpn-connector.clearMetrics",
+          "when": "view == openfortivpnMetrics",
+          "group": "navigation@1"
+        },
+        {
+          "command": "openfortivpn-connector.exportMetrics",
+          "when": "view == openfortivpnMetrics",
+          "group": "navigation@2"
         }
       ],
       "view/item/context": [
@@ -162,6 +191,20 @@
           "command": "openfortivpn-connector.deleteProfile",
           "when": "view == openfortivpnProfiles",
           "group": "9_cutcopypaste"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "openfortivpn-connector.showMetrics",
+          "when": "true"
+        },
+        {
+          "command": "openfortivpn-connector.clearMetrics",
+          "when": "true"
+        },
+        {
+          "command": "openfortivpn-connector.exportMetrics",
+          "when": "true"
         }
       ]
     },

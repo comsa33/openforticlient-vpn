@@ -3,8 +3,10 @@ import * as cp from 'child_process';
 import { ProfileManager } from './models/profileManager';
 import { VpnService } from './services/vpnService';
 import { LogService } from './services/logService';
+import { MetricsService } from './services/metricsService';
 import { createStatusBarItem } from './ui/statusBar';
 import { registerProfilesView } from './ui/profilesView';
+import { MetricsViewProvider } from './ui/metricsView';
 import { registerCommands } from './commands';
 
 /**
@@ -22,6 +24,10 @@ export async function activate(context: vscode.ExtensionContext) {
     // Initialize profile manager
     const profileManager = new ProfileManager(context);
     
+    // Initialize metrics service
+    const metricsService = MetricsService.getInstance(context);
+    metricsService.setProfileManager(profileManager);
+    
     // Initialize VPN service
     const vpnService = new VpnService(context, statusBarItem);
     
@@ -31,6 +37,20 @@ export async function activate(context: vscode.ExtensionContext) {
     
     // Register profile view in activity bar
     registerProfilesView(context, profileManager, vpnService);
+        
+    // Register metrics view in activity bar
+    const metricsViewProvider = new MetricsViewProvider(context.extensionUri);
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(
+            MetricsViewProvider.viewType,
+            metricsViewProvider,
+            {
+                webviewOptions: {
+                    retainContextWhenHidden: true
+                }
+            }
+        )
+    );
     
     // Register commands
     registerCommands(context, profileManager, vpnService);
@@ -49,10 +69,11 @@ export async function activate(context: vscode.ExtensionContext) {
         )
     );
     
-    // Dispose LogService when extension is deactivated
+    // Dispose LogService and MetricsService when extension is deactivated
     context.subscriptions.push({
         dispose: () => {
             logger.dispose();
+            MetricsService.getInstance().dispose();
         }
     });
 }
