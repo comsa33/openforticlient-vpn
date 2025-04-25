@@ -3,7 +3,7 @@
   "icon": "images/openfortivpn-connector.png",
   "displayName": "OpenFortiVPN Connector",
   "description": "A VS Code extension to manage and connect to Fortinet VPNs using openfortivpn.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "RuoLee",
   "license": "MIT",
   "engines": {

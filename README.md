@@ -9,7 +9,7 @@ OpenFortiVPN Connector is an extension that allows you to easily manage Fortinet
 - Manage VPN settings (host, port, username)
 - Automatic connection status monitoring
 
-![OpenFortiVPN Connector Preview](https://raw.githubusercontent.com/comsa33/openforticlient-vpn/main/images/openfortivpn-connector.png)
+<img src="https://raw.githubusercontent.com/comsa33/openforticlient-vpn/main/images/openfortivpn-connector.png" width="200" alt="OpenFortiVPN Connector Preview">
 
 ## Requirements
 
@@ -21,7 +21,7 @@ OpenFortiVPN Connector is an extension that allows you to easily manage Fortinet
 
 ## Installation
 
-Install by searching for "OpenFortiVPN Connector" in the VS Code extension marketplace or download directly from the [Visual Studio Code Marketplace](https://marketplace.visualstudio.com).
+Install by searching for "OpenFortiVPN Connector" in the VS Code extension marketplace or download directly from the [Visual Studio Code Marketplace](https://marketplace.visualstudio.com/items?itemName=RuoLee.openfortivpn-connector).
 
 ## How to Use
 
@@ -62,8 +62,14 @@ This extension is distributed under the MIT license. See the `LICENSE` file for 
 
 ## Contributing
 
-Bug reports, feature requests, or code contributions can be made through the [GitHub repository](https://github.com/yourusername/openfortivpn-connector).
+Bug reports, feature requests, or code contributions can be made through the [GitHub repository](https://github.com/comsa33/openforticlient-vpn).
 
 ---
 
 **Note**: This extension is not affiliated with Fortinet and is not an official Fortinet product. `openfortivpn` is a third-party open source tool.
+
+## Author
+
+Developed by **Ruo Lee**  
+> 👨‍💻 [GitHub](https://github.com/comsa33)  
+> 📫 Contact: comsa333@gmail.com
