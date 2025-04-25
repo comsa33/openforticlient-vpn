@@ -12,11 +12,10 @@ OpenFortiVPN Connector is an extension that allows you to easily manage Fortinet
 - Profile explorer in the activity bar
 - Automatic connection status monitoring
 
-<img src="https://raw.githubusercontent.com/comsa33/openforticlient-vpn/main/images/openfortivpn-connector.png" width="200" alt="OpenFortiVPN Connector Preview">
 
 ## Requirements
 
-<img src="https://raw.githubusercontent.com/comsa33/openforticlient-vpn/main/images/openfortivpn-connector-extension-install-openfortivpn-cli.gif" width="400" alt="OpenFortiVPN Connector Preview">
+<img src="https://raw.githubusercontent.com/comsa33/openforticlient-vpn/main/images/openfortivpn-connector-extension-install-openfortivpn-cli.gif" width="600" alt="OpenFortiVPN Connector Preview">
 
 - Linux or macOS operating system
 - `openfortivpn` command-line tool must be installed
@@ -31,7 +30,7 @@ Install by searching for "OpenFortiVPN Connector" in the VS Code extension marke
 ## How to Use
 
 ### Managing VPN Profiles
-<img src="https://raw.githubusercontent.com/comsa33/openforticlient-vpn/main/images/openfortivpn-connector-extension-add-profile.gif" width="400" alt="OpenFortiVPN Connector Preview">
+<img src="https://raw.githubusercontent.com/comsa33/openforticlient-vpn/main/images/openfortivpn-connector-extension-add-profile.gif" width="600" alt="OpenFortiVPN Connector Preview">
 1. Click on the OpenFortiVPN icon in the activity bar (shield icon)
 2. Click the "+" button to create a new VPN profile
 3. Enter a name, VPN gateway host, port, and username
@@ -44,7 +43,7 @@ Install by searching for "OpenFortiVPN Connector" in the VS Code extension marke
    - Manage profile password
 
 ### Connecting to VPN
-<img src="https://raw.githubusercontent.com/comsa33/openforticlient-vpn/main/images/openfortivpn-connector-extension-connect.gif" width="400" alt="OpenFortiVPN Connector Preview">
+<img src="https://raw.githubusercontent.com/comsa33/openforticlient-vpn/main/images/openfortivpn-connector-extension-connect.gif" width="600" alt="OpenFortiVPN Connector Preview">
 There are multiple ways to connect to VPN:
 1. Click the "VPN: Disconnected" icon in the status bar to toggle using the active profile
 2. Click the play (▶) icon in the Profile Explorer title bar to connect using the active profile
