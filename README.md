@@ -5,7 +5,8 @@ OpenFortiVPN Connector is an extension that allows you to easily manage Fortinet
 ## Key Features
 
 - Manage multiple VPN profiles with different configurations
-- Simple one-click VPN connection/disconnection
+- Simple one-click VPN connection/disconnection with dedicated buttons
+- Visual connection status indicators in Profile Explorer (green/red icons)
 - VPN status monitoring in VS Code status bar
 - Secure password storage for each profile
 - Profile explorer in the activity bar
@@ -42,10 +43,13 @@ Install by searching for "OpenFortiVPN Connector" in the VS Code extension marke
 
 ### Connecting to VPN
 
-1. Click the "VPN: Disconnected" icon in the status bar to connect using the active profile
-2. Alternatively, right-click on a profile in the profile explorer and select "Connect to Profile"
-3. Enter your password when prompted (or use a saved password)
-4. The status bar will show the connection status and the active profile name
+There are multiple ways to connect to VPN:
+1. Click the "VPN: Disconnected" icon in the status bar to toggle using the active profile
+2. Click the play (▶) icon in the Profile Explorer title bar to connect using the active profile
+3. When connected, click the stop (■) icon in the Profile Explorer title bar to disconnect
+4. Right-click on a profile in the profile explorer and select "Connect to Profile"
+5. Enter your password when prompted (or use a saved password)
+6. The status bar and profile explorer will show the connection status with visual indicators
 
 ### Saving Passwords
 
@@ -53,6 +57,20 @@ Install by searching for "OpenFortiVPN Connector" in the VS Code extension marke
 2. Select "Manage Profile Password"
 3. Choose "Save Password" and enter your VPN password
 4. The password will be securely stored in your OS keychain
+
+## Visual Indicators
+
+- In Profile Explorer:
+  - Green shield icon: Active profile that is connected
+  - Orange/yellow shield icon: Active profile that is connecting
+  - Standard shield icon: Active profile that is not connected
+  - Lock icon: Inactive profile
+- In Title Bar:
+  - Play (▶) button: Visible when VPN is disconnected, to connect with active profile
+  - Stop (■) button: Visible when VPN is connected, to disconnect the VPN
+- In Status Bar:
+  - "VPN: Connected" with highlight background: VPN is currently connected
+  - "VPN: Disconnected": No active VPN connection
 
 ## Extension Settings
 
@@ -65,6 +83,8 @@ This extension provides the following settings (legacy mode - profiles recommend
 ## Available Commands
 
 * `OpenFortiVPN: Toggle Connection` - Connect/disconnect using active profile
+* `OpenFortiVPN: Connect` - Connect using active profile
+* `OpenFortiVPN: Disconnect` - Disconnect the active VPN connection
 * `OpenFortiVPN: Configure` - Open profile management
 * `OpenFortiVPN: Create New Profile` - Create a new VPN profile
 * `OpenFortiVPN: Edit Profile` - Edit selected profile

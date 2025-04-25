@@ -2,6 +2,19 @@
 
 All notable changes to the "openfortivpn-connector" extension will be documented in this file.
 
+## [1.1.1] - 2025-04-25
+
+### Added
+- Separate connect (play) and disconnect (stop) buttons in the Profile Explorer title bar for improved usability
+- Visual connection status indicators in the Profile Explorer (green/red icons)
+- Enhanced status display in profile items showing connection state
+
+### Fixed
+- Fixed duplicate VPN status indicators in the status bar
+- Improved visual feedback for VPN connection status
+- Enhanced UI consistency between status bar and profile explorer
+- Improved user experience with context-aware buttons for VPN connection management
+
 ## [1.1.0] - 2025-04-25
 
 ### Added
@@ -72,7 +85,8 @@ All notable changes to the "openfortivpn-connector" extension will be documented
 - Terminal-based openfortivpn execution support
 - macOS and Linux support
 
-[Unreleased]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/comsa33/openforticlient-vpn/compare/v1.0.3...v1.1.0
 [1.0.3]: https://github.com/comsa33/openforticlient-vpn/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/comsa33/openforticlient-vpn/compare/v1.0.1...v1.0.2
