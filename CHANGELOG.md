@@ -2,8 +2,23 @@
 
 All notable changes to the "openfortivpn-connector" extension will be documented in this file.
 
-## [Unreleased]
+## [1.1.0] - 2025-04-25
 
+### Added
+- Multi-profile management for VPN connections
+- Profile Explorer view in Activity Bar
+- Create, edit, delete VPN profiles
+- Switch between different VPN profiles
+- Profile-specific password storage
+- Context menu actions for profiles
+- Automatic migration from legacy settings to profiles
+
+### Changed
+- Refactored codebase for better maintainability and extensibility
+- Improved Status Bar display with active profile information
+- Enhanced connection status updates
+- Updated configuration screens
+- Improved user experience for multiple VPN connections
 
 ## [1.0.3] - 2025-04-25
 
@@ -57,7 +72,8 @@ All notable changes to the "openfortivpn-connector" extension will be documented
 - Terminal-based openfortivpn execution support
 - macOS and Linux support
 
-[Unreleased]: https://github.com/comsa33/openforticlient-vpn/compare/v1.0.3...HEAD
+[Unreleased]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/comsa33/openforticlient-vpn/compare/v1.0.3...v1.1.0
 [1.0.3]: https://github.com/comsa33/openforticlient-vpn/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/comsa33/openforticlient-vpn/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/comsa33/openforticlient-vpn/releases/tag/v1.0.1

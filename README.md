@@ -4,9 +4,11 @@ OpenFortiVPN Connector is an extension that allows you to easily manage Fortinet
 
 ## Key Features
 
-- Check VPN connection status in VS Code status bar
+- Manage multiple VPN profiles with different configurations
 - Simple one-click VPN connection/disconnection
-- Manage VPN settings (host, port, username)
+- VPN status monitoring in VS Code status bar
+- Secure password storage for each profile
+- Profile explorer in the activity bar
 - Automatic connection status monitoring
 
 <img src="https://raw.githubusercontent.com/comsa33/openforticlient-vpn/main/images/openfortivpn-connector.png" width="200" alt="OpenFortiVPN Connector Preview">
@@ -25,22 +27,53 @@ Install by searching for "OpenFortiVPN Connector" in the VS Code extension marke
 
 ## How to Use
 
-1. Open the VS Code command palette (Ctrl+Shift+P or Cmd+Shift+P) and select "OpenFortiVPN: Settings".
-2. Enter the VPN gateway host, port, and username.
-3. Click the "VPN: Disconnected" icon in the status bar or select "OpenFortiVPN: Toggle Connection" from the command palette to connect to VPN.
-4. You will be prompted to enter your password when connecting.
-5. When connected, the status bar icon will change to "VPN: Connected".
-6. Click the icon again to disconnect from the VPN.
+### Managing VPN Profiles
+
+1. Click on the OpenFortiVPN icon in the activity bar (shield icon)
+2. Click the "+" button to create a new VPN profile
+3. Enter a name, VPN gateway host, port, and username
+4. Click on a profile to set it as active
+5. Use the context menu (right-click on a profile) for more options:
+   - Connect to profile
+   - Edit profile
+   - Delete profile
+   - Set as active profile
+   - Manage profile password
+
+### Connecting to VPN
+
+1. Click the "VPN: Disconnected" icon in the status bar to connect using the active profile
+2. Alternatively, right-click on a profile in the profile explorer and select "Connect to Profile"
+3. Enter your password when prompted (or use a saved password)
+4. The status bar will show the connection status and the active profile name
+
+### Saving Passwords
+
+1. Right-click on a profile in the profile explorer
+2. Select "Manage Profile Password"
+3. Choose "Save Password" and enter your VPN password
+4. The password will be securely stored in your OS keychain
 
 ## Extension Settings
 
-This extension provides the following settings:
+This extension provides the following settings (legacy mode - profiles recommended instead):
 
 * `openfortivpn-connector.host`: VPN gateway host address
 * `openfortivpn-connector.port`: VPN gateway port (default: 443)
 * `openfortivpn-connector.username`: VPN account username
 
-Settings can be changed through the VS Code settings UI or extension commands.
+## Available Commands
+
+* `OpenFortiVPN: Toggle Connection` - Connect/disconnect using active profile
+* `OpenFortiVPN: Configure` - Open profile management
+* `OpenFortiVPN: Create New Profile` - Create a new VPN profile
+* `OpenFortiVPN: Edit Profile` - Edit selected profile
+* `OpenFortiVPN: Delete Profile` - Delete selected profile
+* `OpenFortiVPN: Set as Active Profile` - Make selected profile active
+* `OpenFortiVPN: Connect to Profile` - Connect using selected profile
+* `OpenFortiVPN: Save Password` - Save password for active profile
+* `OpenFortiVPN: Clear Saved Password` - Clear saved password for active profile
+* `OpenFortiVPN: Manage Profile Password` - Save or clear password for selected profile
 
 ## Troubleshooting
 
@@ -48,7 +81,7 @@ Settings can be changed through the VS Code settings UI or extension commands.
 
 1. Verify that the `openfortivpn` tool is properly installed.
 2. Test if the openfortivpn command runs directly in the terminal.
-3. Confirm that the host, port, and username are correct.
+3. Confirm that the host, port, and username in your profile are correct.
 4. Make sure you've entered the correct password as administrator privileges (sudo) are required.
 
 ### If VPN Status Is Not Displayed Correctly

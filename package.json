@@ -3,7 +3,7 @@
   "icon": "images/openfortivpn-connector.png",
   "displayName": "OpenFortiVPN Connector",
   "description": "A VS Code extension to manage and connect to Fortinet VPNs using openfortivpn.",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "publisher": "RuoLee",
   "license": "MIT",
   "engines": {
@@ -50,25 +50,108 @@
       {
         "command": "openfortivpn-connector.clearPassword",
         "title": "OpenFortiVPN: Clear Saved Password"
+      },
+      {
+        "command": "openfortivpn-connector.createProfile",
+        "title": "OpenFortiVPN: Create New Profile",
+        "icon": "$(add)"
+      },
+      {
+        "command": "openfortivpn-connector.editProfile",
+        "title": "OpenFortiVPN: Edit Profile",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "openfortivpn-connector.deleteProfile",
+        "title": "OpenFortiVPN: Delete Profile",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "openfortivpn-connector.setActiveProfile",
+        "title": "OpenFortiVPN: Set as Active Profile",
+        "icon": "$(check)"
+      },
+      {
+        "command": "openfortivpn-connector.connectProfile",
+        "title": "OpenFortiVPN: Connect to Profile",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "openfortivpn-connector.manageProfilePassword",
+        "title": "OpenFortiVPN: Manage Profile Password",
+        "icon": "$(key)"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "openfortivpn-explorer",
+          "title": "OpenFortiVPN",
+          "icon": "images/openfortivpn-icon.png"
+        }
+      ]
+    },
+    "views": {
+      "openfortivpn-explorer": [
+        {
+          "id": "openfortivpnProfiles",
+          "name": "VPN Profiles"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "openfortivpn-connector.createProfile",
+          "when": "view == openfortivpnProfiles",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "openfortivpn-connector.connectProfile",
+          "when": "view == openfortivpnProfiles && viewItem == profile",
+          "group": "inline"
+        },
+        {
+          "command": "openfortivpn-connector.editProfile",
+          "when": "view == openfortivpnProfiles",
+          "group": "1_modification"
+        },
+        {
+          "command": "openfortivpn-connector.manageProfilePassword",
+          "when": "view == openfortivpnProfiles",
+          "group": "1_modification"
+        },
+        {
+          "command": "openfortivpn-connector.setActiveProfile",
+          "when": "view == openfortivpnProfiles && viewItem == profile",
+          "group": "2_configuration"
+        },
+        {
+          "command": "openfortivpn-connector.deleteProfile",
+          "when": "view == openfortivpnProfiles",
+          "group": "9_cutcopypaste"
+        }
+      ]
+    },
     "configuration": {
       "title": "OpenFortiVPN Connector",
       "properties": {
         "openfortivpn-connector.host": {
           "type": "string",
           "default": "",
-          "description": "VPN Gateway Host"
+          "description": "VPN Gateway Host (Legacy setting - use profiles instead)"
         },
         "openfortivpn-connector.port": {
           "type": "string",
           "default": "443",
-          "description": "VPN Gateway Port"
+          "description": "VPN Gateway Port (Legacy setting - use profiles instead)"
         },
         "openfortivpn-connector.username": {
           "type": "string",
           "default": "",
-          "description": "VPN Username"
+          "description": "VPN Username (Legacy setting - use profiles instead)"
         }
       }
     }
