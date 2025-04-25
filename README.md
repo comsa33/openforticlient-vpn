@@ -11,6 +11,9 @@ OpenFortiVPN Connector is an extension that allows you to easily manage Fortinet
 - Secure password storage for each profile
 - Profile explorer in the activity bar
 - Automatic connection status monitoring
+- **Connection metrics and statistics monitoring** (New in 1.1.4)
+- **Real-time speed, data usage, and connection time tracking** (New in 1.1.4)
+- **Interactive graphs and historical session data** (New in 1.1.4)
 - **Background connections without terminal windows** (New in 1.1.4)
 - **Detailed connection logs in output panel** (New in 1.1.4)
 - **Secure password handling that prevents exposure** (New in 1.1.4)
@@ -57,6 +60,13 @@ There are multiple ways to connect to VPN:
 5. Enter your password when prompted (or use a saved password)
 6. The status bar and profile explorer will show the connection status with visual indicators
 
+### Saving Passwords
+
+1. Right-click on a profile in the profile explorer
+2. Select "Manage Profile Password"
+3. Choose "Save Password" and enter your VPN password
+4. The password will be securely stored in your OS keychain
+
 ### Viewing Connection Logs (New in 1.1.4)
 
 1. Click the "Output" icon in the Profile Explorer title bar
@@ -64,12 +74,27 @@ There are multiple ways to connect to VPN:
 3. Connection attempts, status changes, errors, and other events are recorded
 4. Logs include timestamps for better tracking
 
-### Saving Passwords
+### Monitoring Connection Metrics (New in 1.1.4)
 
-1. Right-click on a profile in the profile explorer
-2. Select "Manage Profile Password"
-3. Choose "Save Password" and enter your VPN password
-4. The password will be securely stored in your OS keychain
+1. Click the "VPN Connection Metrics" section in the OpenFortiVPN activity bar
+2. View real-time connection metrics in a clear tree format:
+   - Current connection status (Active/Inactive)
+   - Current upload and download speeds
+   - Total data usage (upload/download)
+   - Total combined data transferred
+   - Connection duration
+3. Metrics are automatically updated while connection is active
+4. Use the refresh button to manually update metrics data
+5. Export connection metrics data for analysis
+6. Clear metrics history using the clear button
+
+The metrics view provides essential information about your VPN connection, allowing you to monitor:
+- How long you've been connected
+- Current network speeds
+- Total amount of data transferred during the session
+- Overall connection status
+
+All metrics are collected locally and displayed in real-time for the current VPN session.
 
 ## Visual Indicators
 
@@ -88,11 +113,12 @@ There are multiple ways to connect to VPN:
 
 ## Extension Settings
 
-This extension provides the following settings (legacy mode - profiles recommended instead):
+This extension provides the following settings:
 
-* `openfortivpn-connector.host`: VPN gateway host address
-* `openfortivpn-connector.port`: VPN gateway port (default: 443)
-* `openfortivpn-connector.username`: VPN account username
+* `openfortivpn-connector.host`: VPN gateway host address (Legacy setting - use profiles instead)
+* `openfortivpn-connector.port`: VPN gateway port (default: 443) (Legacy setting - use profiles instead)
+* `openfortivpn-connector.username`: VPN account username (Legacy setting - use profiles instead)
+* `openfortivpn-connector.metricsRefreshInterval`: Interval in seconds for refreshing VPN connection metrics (default: 5)
 
 ## Available Commands
 
@@ -109,6 +135,10 @@ This extension provides the following settings (legacy mode - profiles recommend
 * `OpenFortiVPN: Clear Saved Password` - Clear saved password for active profile
 * `OpenFortiVPN: Manage Profile Password` - Save or clear password for selected profile
 * `OpenFortiVPN: Show Connection Logs` - View detailed VPN connection logs (New in 1.1.4)
+* `OpenFortiVPN: Show Connection Metrics` - View VPN connection metrics and statistics (New in 1.1.4)
+* `OpenFortiVPN: Refresh Metrics` - Manually refresh metrics data display (New in 1.1.4)
+* `OpenFortiVPN: Clear Connection Metrics` - Clear stored VPN connection metrics (New in 1.1.4)
+* `OpenFortiVPN: Export Connection Metrics` - Export metrics data to JSON file (New in 1.1.4)
 
 ## Troubleshooting
 

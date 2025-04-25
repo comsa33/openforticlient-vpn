@@ -95,6 +95,26 @@
         "command": "openfortivpn-connector.showLogs",
         "title": "OpenFortiVPN: Show Connection Logs",
         "icon": "$(output)"
+      },
+      {
+        "command": "openfortivpn-connector.showMetrics",
+        "title": "OpenFortiVPN: Show Connection Metrics",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "openfortivpn-connector.refreshMetrics",
+        "title": "OpenFortiVPN: Refresh Metrics",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "openfortivpn-connector.clearMetrics",
+        "title": "OpenFortiVPN: Clear Connection Metrics",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "openfortivpn-connector.exportMetrics",
+        "title": "OpenFortiVPN: Export Connection Metrics",
+        "icon": "$(export)"
       }
     ],
     "viewsContainers": {
@@ -111,6 +131,10 @@
         {
           "id": "openfortivpnProfiles",
           "name": "VPN Profiles"
+        },
+        {
+          "id": "openfortivpnMetrics",
+          "name": "VPN Connection Metrics"
         }
       ]
     },
@@ -134,6 +158,21 @@
         {
           "command": "openfortivpn-connector.showLogs",
           "when": "view == openfortivpnProfiles",
+          "group": "navigation@3"
+        },
+        {
+          "command": "openfortivpn-connector.refreshMetrics",
+          "when": "view == openfortivpnMetrics",
+          "group": "navigation@1"
+        },
+        {
+          "command": "openfortivpn-connector.clearMetrics",
+          "when": "view == openfortivpnMetrics",
+          "group": "navigation@2"
+        },
+        {
+          "command": "openfortivpn-connector.exportMetrics",
+          "when": "view == openfortivpnMetrics",
           "group": "navigation@3"
         }
       ],
@@ -163,6 +202,20 @@
           "when": "view == openfortivpnProfiles",
           "group": "9_cutcopypaste"
         }
+      ],
+      "commandPalette": [
+        {
+          "command": "openfortivpn-connector.showMetrics",
+          "when": "true"
+        },
+        {
+          "command": "openfortivpn-connector.clearMetrics",
+          "when": "true"
+        },
+        {
+          "command": "openfortivpn-connector.exportMetrics",
+          "when": "true"
+        }
       ]
     },
     "configuration": {
@@ -182,6 +235,13 @@
           "type": "string",
           "default": "",
           "description": "VPN Username (Legacy setting - use profiles instead)"
+        },
+        "openfortivpn-connector.metricsRefreshInterval": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "maximum": 60,
+          "description": "Interval (in seconds) for refreshing VPN connection metrics (1-60)"
         }
       }
     }
