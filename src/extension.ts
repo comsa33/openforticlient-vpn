@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
+import * as cp from 'child_process';
 import { ProfileManager } from './models/profileManager';
 import { VpnService } from './services/vpnService';
+import { LogService } from './services/logService';
 import { createStatusBarItem } from './ui/statusBar';
 import { registerProfilesView } from './ui/profilesView';
 import { registerCommands } from './commands';
@@ -9,7 +11,9 @@ import { registerCommands } from './commands';
  * Activate the extension
  */
 export async function activate(context: vscode.ExtensionContext) {
-    console.log('OpenFortiVPN Connector has been activated.');
+    // Initialize logging service
+    const logger = LogService.getInstance();
+    logger.log('OpenFortiVPN Connector has been activated.');
     
     // Create status bar item
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
@@ -34,7 +38,7 @@ export async function activate(context: vscode.ExtensionContext) {
     // Migrate old settings to profiles if needed
     const hasMigrated = await profileManager.migrateFromSettings();
     if (hasMigrated) {
-        vscode.window.showInformationMessage('Existing VPN settings have been migrated to the new profiles system.');
+        logger.log('Existing VPN settings have been migrated to the new profiles system.', true);
     }
     
     // Register profile explorer view
@@ -44,19 +48,30 @@ export async function activate(context: vscode.ExtensionContext) {
             new (require('./ui/profilesView').ProfilesProvider)(profileManager, vpnService)
         )
     );
+    
+    // Dispose LogService when extension is deactivated
+    context.subscriptions.push({
+        dispose: () => {
+            logger.dispose();
+        }
+    });
 }
 
 /**
  * Deactivate the extension
  */
 export function deactivate() {
-    // This will be called when the extension is deactivated
-    // We should disconnect VPN if connected, but we can't access the context here
+    const logger = LogService.getInstance();
+    logger.log('Deactivating OpenFortiVPN Connector extension...');
+    
+    // Try to disconnect VPN if connected
     try {
-        const terminal = vscode.window.createTerminal('OpenFortiVPN');
-        terminal.show();
-        terminal.sendText('sudo pkill -SIGTERM openfortivpn');
+        logger.log('Attempting to terminate any running OpenFortiVPN connections...');
+        const child = cp.spawn('sudo', ['-n', 'pkill', '-SIGTERM', 'openfortivpn'], {
+            stdio: 'ignore'
+        });
+        child.unref();
     } catch (error) {
-        console.error('Failed to disconnect VPN during deactivation', error);
+        logger.error('Failed to disconnect VPN during deactivation', error);
     }
 }

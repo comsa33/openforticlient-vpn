@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ProfileManager } from '../models/profileManager';
 import { VpnService } from '../services/vpnService';
+import { LogService } from '../services/logService';
 import { registerProfileCommands } from './profileCommands';
 import { registerVpnCommands } from './vpnCommands';
 
@@ -17,4 +18,11 @@ export function registerCommands(
     
     // Register profile management commands
     registerProfileCommands(context, profileManager, vpnService);
+    
+    // Register log display command
+    context.subscriptions.push(
+        vscode.commands.registerCommand('openfortivpn-connector.showLogs', () => {
+            LogService.getInstance().show();
+        })
+    );
 }
