@@ -1,28 +1,28 @@
 import * as vscode from 'vscode';
 import * as cp from 'child_process';
 
-// VPN 프로세스 관리를 위한 전역 변수
+// Global variables for VPN process management
 let vpnProcess: cp.ChildProcess | undefined;
 let statusBarItem: vscode.StatusBarItem;
 let isConnected = false;
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log('OpenFortiVPN Connector가 활성화되었습니다.');
+    console.log('OpenFortiVPN Connector has been activated.');
 
-    // 상태 표시줄 아이템 생성
+    // Create status bar item
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    statusBarItem.text = "$(shield) VPN: 해제됨";
+    statusBarItem.text = "$(shield) VPN: Disconnected";
     statusBarItem.command = 'openfortivpn-connector.toggle';
-    statusBarItem.tooltip = "OpenFortiVPN 연결 토글";
+    statusBarItem.tooltip = "Toggle OpenFortiVPN Connection";
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
 
-    // 설정 명령어 등록
+    // Register configuration command
     let configCommand = vscode.commands.registerCommand('openfortivpn-connector.config', async () => {
         await configureVPN();
     });
 
-    // 토글 명령어 등록
+    // Register toggle command
     let toggleCommand = vscode.commands.registerCommand('openfortivpn-connector.toggle', () => {
         if (isConnected) {
             disconnectVPN();
@@ -33,30 +33,30 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(configCommand, toggleCommand);
 
-    // 상태 확인 인터벌 설정
+    // Set interval for status checking
     setInterval(checkVPNStatus, 10000);
 }
 
-// VPN 설정 함수
+// VPN configuration function
 async function configureVPN() {
-    // 현재 설정 가져오기
+    // Get current configuration
     const config = vscode.workspace.getConfiguration('openfortivpn-connector');
     
-    // 호스트 설정
+    // Host configuration
     const host = await vscode.window.showInputBox({
-        prompt: 'VPN 게이트웨이 주소를 입력하세요',
+        prompt: 'Enter the VPN gateway address',
         value: config.get('host') as string
     });
     
     if (host !== undefined) {
         await config.update('host', host, vscode.ConfigurationTarget.Global);
     } else {
-        return; // 사용자가 취소함
+        return; // User canceled
     }
     
-    // 포트 설정
+    // Port configuration
     const port = await vscode.window.showInputBox({
-        prompt: 'VPN 게이트웨이 포트를 입력하세요',
+        prompt: 'Enter the VPN gateway port',
         value: config.get('port') as string || '443'
     });
     
@@ -64,9 +64,9 @@ async function configureVPN() {
         await config.update('port', port, vscode.ConfigurationTarget.Global);
     }
     
-    // 사용자 이름 설정
+    // Username configuration
     const username = await vscode.window.showInputBox({
-        prompt: '사용자 이름을 입력하세요',
+        prompt: 'Enter the username',
         value: config.get('username') as string
     });
     
@@ -74,12 +74,12 @@ async function configureVPN() {
         await config.update('username', username, vscode.ConfigurationTarget.Global);
     }
     
-    vscode.window.showInformationMessage('OpenFortiVPN 설정이 저장되었습니다.');
+    vscode.window.showInformationMessage('OpenFortiVPN configuration has been saved.');
 }
 
-// VPN 연결 함수
+// VPN connection function
 async function connectVPN() {
-    // 설정 확인
+    // Check configuration
     const config = vscode.workspace.getConfiguration('openfortivpn-connector');
     const host = config.get('host') as string;
     const port = config.get('port') as string;
@@ -87,11 +87,11 @@ async function connectVPN() {
     
     if (!host || !username) {
         const setup = await vscode.window.showWarningMessage(
-            'OpenFortiVPN 설정이 필요합니다.', 
-            '설정하기'
+            'OpenFortiVPN configuration is required.', 
+            'Configure'
         );
         
-        if (setup === '설정하기') {
+        if (setup === 'Configure') {
             await configureVPN();
             return;
         } else {
@@ -99,93 +99,93 @@ async function connectVPN() {
         }
     }
     
-    // 비밀번호 입력
+    // Enter password
     const password = await vscode.window.showInputBox({
-        prompt: 'VPN 비밀번호를 입력하세요',
+        prompt: 'Enter the VPN password',
         password: true
     });
     
     if (!password) {
-        return; // 사용자가 취소함
+        return; // User canceled
     }
     
     try {
         const hostWithPort = port ? `${host}:${port}` : host;
         
-        // 터미널 생성
+        // Create terminal
         const terminal = vscode.window.createTerminal('OpenFortiVPN');
         terminal.show();
         
-        // 방법 1: 두 단계로 비밀번호를 처리하는 방식
+        // Method 1: Handle password in two steps
         terminal.sendText(`sudo openfortivpn ${hostWithPort} -u ${username}`);
         
-        // 약간의 지연 후 비밀번호 입력 (비밀번호 프롬프트가 나타날 시간을 줌)
+        // Delay slightly to allow password prompt to appear
         setTimeout(() => {
             terminal.sendText(password);
         }, 1000);
         
-        // 상태 업데이트
+        // Update status
         isConnected = true;
-        statusBarItem.text = "$(shield) VPN: 연결 중...";
+        statusBarItem.text = "$(shield) VPN: Connecting...";
         
-        // 연결 확인 시작 (비밀번호 입력 후 시간을 더 줌)
+        // Start connection check (allow more time after password input)
         setTimeout(checkVPNStatus, 5000);
         
-        vscode.window.showInformationMessage('OpenFortiVPN 연결 시도 중...');
+        vscode.window.showInformationMessage('Attempting to connect to OpenFortiVPN...');
     } catch (error) {
-        vscode.window.showErrorMessage(`VPN 연결 실패: ${error}`);
+        vscode.window.showErrorMessage(`VPN connection failed: ${error}`);
     }
 }
 
-// VPN 연결 해제 함수
+// VPN disconnection function
 function disconnectVPN() {
     try {
-        // 터미널 생성
+        // Create terminal
         const terminal = vscode.window.createTerminal('OpenFortiVPN');
         terminal.show();
         
-        // sudo pkill 명령어 실행
+        // Execute sudo pkill command
         terminal.sendText('sudo pkill -SIGTERM openfortivpn');
         
-        // 상태 업데이트
+        // Update status
         isConnected = false;
-        statusBarItem.text = "$(shield) VPN: 해제됨";
+        statusBarItem.text = "$(shield) VPN: Disconnected";
         
-        vscode.window.showInformationMessage('OpenFortiVPN 연결이 해제되었습니다.');
+        vscode.window.showInformationMessage('OpenFortiVPN has been disconnected.');
     } catch (error) {
-        vscode.window.showErrorMessage(`VPN 연결 해제 실패: ${error}`);
+        vscode.window.showErrorMessage(`Failed to disconnect VPN: ${error}`);
     }
 }
 
-// VPN 상태 확인 함수
+// VPN status check function
 function checkVPNStatus() {
-    // macOS와 Linux에서 작동하는 명령어
+    // Command works on macOS and Linux
     const command = 'ip addr show ppp0 2>/dev/null || ifconfig ppp0 2>/dev/null';
     
     cp.exec(command, (error, stdout) => {
         if (error || !stdout) {
-            // ppp0 인터페이스가 없으면 VPN이 연결되지 않은 상태
+            // If ppp0 interface does not exist, VPN is disconnected
             if (isConnected) {
                 isConnected = false;
-                statusBarItem.text = "$(shield) VPN: 해제됨";
-                vscode.window.showWarningMessage('OpenFortiVPN 연결이 끊어졌습니다.');
+                statusBarItem.text = "$(shield) VPN: Disconnected";
+                vscode.window.showWarningMessage('OpenFortiVPN connection has been lost.');
             }
         } else {
-            // ppp0 인터페이스가 있으면 VPN이 연결된 상태
+            // If ppp0 interface exists, VPN is connected
             if (!isConnected) {
                 isConnected = true;
-                statusBarItem.text = "$(shield) VPN: 연결됨";
-                vscode.window.showInformationMessage('OpenFortiVPN 연결이 확인되었습니다.');
+                statusBarItem.text = "$(shield) VPN: Connected";
+                vscode.window.showInformationMessage('OpenFortiVPN connection has been confirmed.');
             } else {
-                statusBarItem.text = "$(shield) VPN: 연결됨";
+                statusBarItem.text = "$(shield) VPN: Connected";
             }
         }
     });
 }
 
-// 확장 프로그램 비활성화 시 호출
+// Called when the extension is deactivated
 export function deactivate() {
-    // VPN 연결 해제
+    // Disconnect VPN
     if (isConnected) {
         disconnectVPN();
     }
