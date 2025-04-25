@@ -2,6 +2,9 @@
 
 All notable changes to the "openfortivpn-connector" extension will be documented in this file.
 
+## [Unreleased]
+
+
 ## [1.0.3] - 2025-04-25
 
 ### Chore
