@@ -49,6 +49,6 @@ All notable changes to the "openfortivpn-connector" extension will be documented
 - Terminal-based openfortivpn execution support
 - macOS and Linux support
 
-[Unreleased]: https://github.com/comsa33/openfortivpn-connector/compare/v1.0.2...HEAD
-[1.0.2]: https://github.com/comsa33/openfortivpn-connector/compare/v1.0.1...v1.0.2
-[1.0.1]: https://github.com/comsa33/openfortivpn-connector/releases/tag/v1.0.1
+[Unreleased]: https://github.com/comsa33/openforticlient-vpn/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/comsa33/openforticlient-vpn/compare/v1.0.1...v1.0.2
+[1.0.1]: https://github.com/comsa33/openforticlient-vpn/releases/tag/v1.0.1
