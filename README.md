@@ -64,12 +64,12 @@ This extension is distributed under the MIT license. See the `LICENSE` file for 
 
 Bug reports, feature requests, or code contributions can be made through the [GitHub repository](https://github.com/comsa33/openforticlient-vpn).
 
----
-
-**Note**: This extension is not affiliated with Fortinet and is not an official Fortinet product. `openfortivpn` is a third-party open source tool.
-
 ## Author
 
 Developed by **Ruo Lee**  
 > 👨‍💻 [GitHub](https://github.com/comsa33)  
 > 📫 Contact: comsa333@gmail.com
+
+---
+
+**Note**: This extension is not affiliated with Fortinet and is not an official Fortinet product. `openfortivpn` is a third-party open source tool.
