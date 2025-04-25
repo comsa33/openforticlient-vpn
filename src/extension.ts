@@ -13,7 +13,6 @@ export async function activate(context: vscode.ExtensionContext) {
     
     // Create status bar item
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    statusBarItem.show();
     context.subscriptions.push(statusBarItem);
     
     // Initialize profile manager
@@ -22,8 +21,9 @@ export async function activate(context: vscode.ExtensionContext) {
     // Initialize VPN service
     const vpnService = new VpnService(context, statusBarItem);
     
-    // Create and configure status bar item
-    createStatusBarItem(context, profileManager, vpnService);
+    // Configure status bar item
+    createStatusBarItem(statusBarItem, profileManager, vpnService);
+    statusBarItem.show();
     
     // Register profile view in activity bar
     registerProfilesView(context, profileManager, vpnService);

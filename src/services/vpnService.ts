@@ -53,11 +53,17 @@ export class VpnService {
     private updateStatusBar(): void {
         if (this._isConnecting) {
             this._statusBarItem.text = "$(shield) VPN: Connecting...";
+            this._statusBarItem.backgroundColor = undefined;
         } else if (this._isConnected) {
             this._statusBarItem.text = "$(shield) VPN: Connected";
+            this._statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
         } else {
             this._statusBarItem.text = "$(shield) VPN: Disconnected";
+            this._statusBarItem.backgroundColor = undefined;
         }
+        
+        // Update context for command visibility in menus
+        vscode.commands.executeCommand('setContext', 'openfortivpn:isConnected', this._isConnected);
     }
     
     /**

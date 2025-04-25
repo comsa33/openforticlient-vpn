@@ -3,7 +3,7 @@
   "icon": "images/openfortivpn-connector.png",
   "displayName": "OpenFortiVPN Connector",
   "description": "A VS Code extension to manage and connect to Fortinet VPNs using openfortivpn.",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "publisher": "RuoLee",
   "license": "MIT",
   "engines": {
@@ -80,6 +80,16 @@
         "command": "openfortivpn-connector.manageProfilePassword",
         "title": "OpenFortiVPN: Manage Profile Password",
         "icon": "$(key)"
+      },
+      {
+        "command": "openfortivpn-connector.connectVpn",
+        "title": "OpenFortiVPN: Connect",
+        "icon": "$(play)"
+      },
+      {
+        "command": "openfortivpn-connector.disconnectVpn",
+        "title": "OpenFortiVPN: Disconnect",
+        "icon": "$(debug-stop)"
       }
     ],
     "viewsContainers": {
@@ -102,9 +112,19 @@
     "menus": {
       "view/title": [
         {
+          "command": "openfortivpn-connector.connectVpn",
+          "when": "view == openfortivpnProfiles && !openfortivpn:isConnected",
+          "group": "navigation@1"
+        },
+        {
+          "command": "openfortivpn-connector.disconnectVpn",
+          "when": "view == openfortivpnProfiles && openfortivpn:isConnected",
+          "group": "navigation@1"
+        },
+        {
           "command": "openfortivpn-connector.createProfile",
           "when": "view == openfortivpnProfiles",
-          "group": "navigation"
+          "group": "navigation@2"
         }
       ],
       "view/item/context": [

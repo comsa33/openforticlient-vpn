@@ -6,15 +6,13 @@ import { VpnService } from '../services/vpnService';
  * Create and manage the status bar item
  */
 export function createStatusBarItem(
-    context: vscode.ExtensionContext,
+    statusBarItem: vscode.StatusBarItem,
     profileManager: ProfileManager,
     vpnService: VpnService
-): vscode.StatusBarItem {
-    // Create status bar item
-    const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+): void {
+    // Configure status bar item
     statusBarItem.command = 'openfortivpn-connector.toggle';
     statusBarItem.tooltip = "Toggle OpenFortiVPN Connection";
-    context.subscriptions.push(statusBarItem);
     
     // Update status bar when profiles change
     profileManager.onProfilesChanged(() => {
@@ -28,9 +26,6 @@ export function createStatusBarItem(
     
     // Initial update
     updateStatusBar(statusBarItem, profileManager, vpnService);
-    statusBarItem.show();
-    
-    return statusBarItem;
 }
 
 /**
@@ -52,6 +47,7 @@ function updateStatusBar(
         }
     } else if (vpnService.isConnected) {
         statusBarItem.text = `$(shield) VPN: Connected`;
+        statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
         if (activeProfile) {
             statusBarItem.tooltip = `Connected to ${activeProfile.name} (${activeProfile.host})`;
         } else {
@@ -59,6 +55,7 @@ function updateStatusBar(
         }
     } else {
         statusBarItem.text = `$(shield) VPN: Disconnected`;
+        statusBarItem.backgroundColor = undefined;
         if (activeProfile) {
             statusBarItem.tooltip = `Profile: ${activeProfile.name} (Disconnected)`;
         } else {
