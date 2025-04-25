@@ -9,7 +9,7 @@ OpenFortiVPN Connector is an extension that allows you to easily manage Fortinet
 - Manage VPN settings (host, port, username)
 - Automatic connection status monitoring
 
-![OpenFortiVPN Connector Preview](https://github.com/comsa33/openforticlient-vpn/blob/main/images/openfortivpn-connector.png)
+![OpenFortiVPN Connector Preview](https://raw.githubusercontent.com/comsa33/openforticlient-vpn/main/images/openfortivpn-connector.png)
 
 ## Requirements
 
