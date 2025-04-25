@@ -11,6 +11,9 @@ OpenFortiVPN Connector is an extension that allows you to easily manage Fortinet
 - Secure password storage for each profile
 - Profile explorer in the activity bar
 - Automatic connection status monitoring
+- **Background connections without terminal windows** (New in 1.1.4)
+- **Detailed connection logs in output panel** (New in 1.1.4)
+- **Secure password handling that prevents exposure** (New in 1.1.4)
 
 
 ## Requirements
@@ -54,6 +57,13 @@ There are multiple ways to connect to VPN:
 5. Enter your password when prompted (or use a saved password)
 6. The status bar and profile explorer will show the connection status with visual indicators
 
+### Viewing Connection Logs (New in 1.1.4)
+
+1. Click the "Output" icon in the Profile Explorer title bar
+2. View detailed connection logs in the Output panel
+3. Connection attempts, status changes, errors, and other events are recorded
+4. Logs include timestamps for better tracking
+
 ### Saving Passwords
 
 1. Right-click on a profile in the profile explorer
@@ -71,6 +81,7 @@ There are multiple ways to connect to VPN:
 - In Title Bar:
   - Play (▶) button: Visible when VPN is disconnected, to connect with active profile
   - Stop (■) button: Visible when VPN is connected, to disconnect the VPN
+  - Output button: View connection logs (New in 1.1.4)
 - In Status Bar:
   - "VPN: Connected" with highlight background: VPN is currently connected
   - "VPN: Disconnected": No active VPN connection
@@ -97,6 +108,7 @@ This extension provides the following settings (legacy mode - profiles recommend
 * `OpenFortiVPN: Save Password` - Save password for active profile
 * `OpenFortiVPN: Clear Saved Password` - Clear saved password for active profile
 * `OpenFortiVPN: Manage Profile Password` - Save or clear password for selected profile
+* `OpenFortiVPN: Show Connection Logs` - View detailed VPN connection logs (New in 1.1.4)
 
 ## Troubleshooting
 
@@ -106,11 +118,13 @@ This extension provides the following settings (legacy mode - profiles recommend
 2. Test if the openfortivpn command runs directly in the terminal.
 3. Confirm that the host, port, and username in your profile are correct.
 4. Make sure you've entered the correct password as administrator privileges (sudo) are required.
+5. Check the connection logs using the "Show Connection Logs" command for more details about the error.
 
 ### If VPN Status Is Not Displayed Correctly
 
 1. Try restarting VS Code.
 2. Check if the ppp0 interface exists using the `ip addr` or `ifconfig` command in the terminal.
+3. View the connection logs to see if any errors were reported during connection attempts.
 
 ## License
 

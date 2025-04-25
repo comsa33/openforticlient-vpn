@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as cp from 'child_process';
 import { VpnProfile } from '../models/profile';
+import { LogService } from './logService';
 
 /**
  * Password key for SecretStorage
@@ -16,6 +17,8 @@ export class VpnService {
     private _isConnecting: boolean = false;
     private _statusBarItem: vscode.StatusBarItem;
     private _onStatusChanged: vscode.EventEmitter<boolean> = new vscode.EventEmitter<boolean>();
+    private _currentProcess: cp.ChildProcess | null = null;
+    private _logger: LogService;
     
     /**
      * Event that fires when VPN connection status changes
@@ -25,12 +28,15 @@ export class VpnService {
     constructor(context: vscode.ExtensionContext, statusBarItem: vscode.StatusBarItem) {
         this.context = context;
         this._statusBarItem = statusBarItem;
+        this._logger = LogService.getInstance();
         
         // Set initial status
         this.updateStatusBar();
         
         // Start status checking
         setInterval(() => this.checkVPNStatus(), 5000);
+        
+        this._logger.log('VPN Service initialized');
     }
     
     /**
@@ -78,21 +84,25 @@ export class VpnService {
      */
     public async connect(profile: VpnProfile): Promise<boolean> {
         if (this._isConnected || this._isConnecting) {
-            vscode.window.showWarningMessage('VPN is already connected or connecting.');
+            this._logger.log('VPN is already connected or connecting.', true);
             return false;
         }
+        
+        this._logger.log(`Connecting to VPN using profile "${profile.name}" (${profile.host}:${profile.port})...`);
         
         // Get saved password for this profile
         let password = await this.context.secrets.get(this.getPasswordKey(profile.id));
         
         // If no saved password, ask for it
         if (!password) {
+            this._logger.log('No saved password found, prompting for password...');
             password = await vscode.window.showInputBox({
                 prompt: `Enter VPN password for profile "${profile.name}"`,
                 password: true
             });
             
             if (!password) {
+                this._logger.log('Password entry canceled by user');
                 return false; // User canceled
             }
             
@@ -103,7 +113,7 @@ export class VpnService {
             
             if (savePassword === 'Yes') {
                 await this.context.secrets.store(this.getPasswordKey(profile.id), password);
-                vscode.window.showInformationMessage('Password saved for future connections.');
+                this._logger.log('Password saved for future connections.');
             }
         }
         
@@ -113,27 +123,88 @@ export class VpnService {
             
             const hostWithPort = profile.port ? `${profile.host}:${profile.port}` : profile.host;
             
-            // Create terminal
-            const terminal = vscode.window.createTerminal('OpenFortiVPN');
-            terminal.show();
+            // Start openfortivpn in background mode
+            this._logger.log('Starting OpenFortiVPN process in background mode...');
             
-            // Use expect-like approach for automating the password input
-            const script = `
-echo '${password}' | sudo -S openfortivpn ${hostWithPort} -u ${profile.username}
-`;
+            // Prepare sudo and openfortivpn commands
+            const sudoCmd = 'sudo';
+            const args = ['-S', 'openfortivpn', hostWithPort, '-u', profile.username];
             
-            terminal.sendText(script);
+            // Create child process
+            this._currentProcess = cp.spawn(sudoCmd, args, {
+                stdio: ['pipe', 'pipe', 'pipe']
+            });
             
-            vscode.window.showInformationMessage(`Connecting to VPN using profile "${profile.name}"...`);
+            // Pass password to stdin securely
+            if (this._currentProcess.stdin) {
+                this._currentProcess.stdin.write(password + '\n');
+                // Securely wipe password from memory
+                password = '';
+            }
             
-            // Wait a bit and then check status
+            // Process stdout
+            if (this._currentProcess.stdout) {
+                this._currentProcess.stdout.on('data', (data) => {
+                    const output = data.toString();
+                    this._logger.log(`VPN output: ${output.trim()}`);
+                    
+                    // Check for successful connection
+                    if (output.includes('Tunnel is up and running')) {
+                        this._isConnecting = false;
+                        this._isConnected = true;
+                        this.updateStatusBar();
+                        this._logger.log('VPN connection established successfully', true);
+                        this._onStatusChanged.fire(true);
+                    }
+                });
+            }
+            
+            // Process stderr
+            if (this._currentProcess.stderr) {
+                this._currentProcess.stderr.on('data', (data) => {
+                    const output = data.toString();
+                    // Ignore password prompts (already sent via stdin)
+                    if (!output.includes('password for') && !output.includes('[sudo]')) {
+                        this._logger.log(`VPN error: ${output.trim()}`);
+                    }
+                });
+            }
+            
+            // Process exit
+            this._currentProcess.on('close', (code) => {
+                if (code !== 0 && this._isConnecting) {
+                    this._isConnecting = false;
+                    this.updateStatusBar();
+                    this._logger.error(`VPN process exited with code ${code}`, null, true);
+                    this._onStatusChanged.fire(false);
+                } else if (this._isConnected) {
+                    this._isConnected = false;
+                    this.updateStatusBar();
+                    this._logger.log('VPN connection closed', true);
+                    this._onStatusChanged.fire(false);
+                }
+                this._currentProcess = null;
+            });
+            
+            // Process error
+            this._currentProcess.on('error', (error) => {
+                this._isConnecting = false;
+                this.updateStatusBar();
+                this._logger.error('Failed to start VPN process', error, true);
+                this._onStatusChanged.fire(false);
+                this._currentProcess = null;
+            });
+            
+            this._logger.log(`Connecting to VPN using profile "${profile.name}"...`, true);
+            
+            // Check status after 5 seconds
             setTimeout(() => this.checkVPNStatus(), 5000);
             
             return true;
         } catch (error) {
             this._isConnecting = false;
             this.updateStatusBar();
-            vscode.window.showErrorMessage(`VPN connection failed: ${error}`);
+            this._logger.error(`VPN connection failed`, error, true);
             return false;
         }
     }
@@ -143,53 +214,104 @@ echo '${password}' | sudo -S openfortivpn ${hostWithPort} -u ${profile.username}
      */
     public async disconnect(): Promise<boolean> {
         if (!this._isConnected && !this._isConnecting) {
-            vscode.window.showWarningMessage('VPN is not connected.');
+            this._logger.log('VPN is not connected.', true);
             return false;
         }
         
+        this._logger.log('Disconnecting VPN...');
+        
         try {
-            // Ask for password (we don't know which profile was used to connect)
-            // This could be improved by tracking the active connection profile
+            // Get active profile
             const activeProfile = await vscode.commands.executeCommand<VpnProfile>('openfortivpn-connector.getActiveProfile');
             
             let password;
             if (activeProfile) {
-                // Try to get the saved password for the active profile
+                // Try to get saved password for active profile
                 password = await this.context.secrets.get(this.getPasswordKey(activeProfile.id));
             }
             
             // If no saved password or no active profile, ask for it
             if (!password) {
+                this._logger.log('No saved password found for disconnection, prompting for sudo password...');
                 password = await vscode.window.showInputBox({
                     prompt: 'Enter sudo password to disconnect VPN',
                     password: true
                 });
                 
                 if (!password) {
+                    this._logger.log('Password entry canceled by user');
                     return false; // User canceled
                 }
             }
             
-            // Create terminal
-            const terminal = vscode.window.createTerminal('OpenFortiVPN');
-            terminal.show();
+            // Execute disconnect command in background
+            const sudoCmd = 'sudo';
+            const args = ['-S', 'pkill', '-SIGTERM', 'openfortivpn'];
             
-            // Use echo to pipe password to sudo
-            terminal.sendText(`echo '${password}' | sudo -S pkill -SIGTERM openfortivpn`);
+            const process = cp.spawn(sudoCmd, args, {
+                stdio: ['pipe', 'pipe', 'pipe']
+            });
+            
+            // Pass password to stdin
+            if (process.stdin) {
+                process.stdin.write(password + '\n');
+                // Securely wipe password from memory
+                password = '';
+            }
+            
+            // Process stdout
+            if (process.stdout) {
+                process.stdout.on('data', (data) => {
+                    this._logger.log(`Disconnect output: ${data.toString().trim()}`);
+                });
+            }
+            
+            // Process stderr
+            if (process.stderr) {
+                process.stderr.on('data', (data) => {
+                    const output = data.toString();
+                    // Ignore password prompts
+                    if (!output.includes('password for') && !output.includes('[sudo]')) {
+                        this._logger.log(`Disconnect error: ${output.trim()}`);
+                    }
+                });
+            }
+            
+            // Wait for process to complete
+            await new Promise<void>((resolve) => {
+                process.on('close', (code) => {
+                    if (code !== 0) {
+                        this._logger.error(`Disconnect process exited with code ${code}`);
+                    } else {
+                        this._logger.log('VPN disconnection command completed successfully');
+                    }
+                    resolve();
+                });
+            });
+            
+            // Clean up current process if still running
+            if (this._currentProcess) {
+                try {
+                    this._currentProcess.kill();
+                } catch (err) {
+                    this._logger.log(`Error killing current process: ${err}`);
+                }
+                this._currentProcess = null;
+            }
             
             // Update status
             this._isConnected = false;
             this._isConnecting = false;
             this.updateStatusBar();
             
-            vscode.window.showInformationMessage('OpenFortiVPN has been disconnected.');
+            this._logger.log('OpenFortiVPN has been disconnected.', true);
             
             // Notify status change
             this._onStatusChanged.fire(false);
             
             return true;
         } catch (error) {
-            vscode.window.showErrorMessage(`Failed to disconnect VPN: ${error}`);
+            this._logger.error(`Failed to disconnect VPN`, error, true);
             return false;
         }
     }
@@ -208,7 +330,7 @@ echo '${password}' | sudo -S openfortivpn ${hostWithPort} -u ${profile.username}
         }
         
         await this.context.secrets.store(this.getPasswordKey(profile.id), password);
-        vscode.window.showInformationMessage(`Password saved for profile "${profile.name}".`);
+        this._logger.log(`Password saved for profile "${profile.name}".`, true);
         return true;
     }
     
@@ -217,7 +339,7 @@ echo '${password}' | sudo -S openfortivpn ${hostWithPort} -u ${profile.username}
      */
     public async clearPassword(profile: VpnProfile): Promise<void> {
         await this.context.secrets.delete(this.getPasswordKey(profile.id));
-        vscode.window.showInformationMessage(`Password cleared for profile "${profile.name}".`);
+        this._logger.log(`Password cleared for profile "${profile.name}".`, true);
     }
     
     /**
@@ -236,7 +358,7 @@ echo '${password}' | sudo -S openfortivpn ${hostWithPort} -u ${profile.username}
                     this._isConnected = false;
                     this._isConnecting = false;
                     this.updateStatusBar();
-                    vscode.window.showWarningMessage('OpenFortiVPN connection has been lost.');
+                    this._logger.log('OpenFortiVPN connection has been lost.', true);
                     
                     // Notify status change
                     this._onStatusChanged.fire(false);
@@ -248,7 +370,7 @@ echo '${password}' | sudo -S openfortivpn ${hostWithPort} -u ${profile.username}
                 if (!this._isConnected) {
                     this._isConnected = true;
                     this.updateStatusBar();
-                    vscode.window.showInformationMessage('OpenFortiVPN connection has been established.');
+                    this._logger.log('OpenFortiVPN connection has been established.', true);
                     
                     // Notify status change
                     this._onStatusChanged.fire(true);

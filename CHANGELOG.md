@@ -2,6 +2,25 @@
 
 All notable changes to the "openfortivpn-connector" extension will be documented in this file.
 
+## [1.1.4] - 2025-04-26
+
+### Added
+- Connection logging functionality with detailed connection status information
+- New "Show Connection Logs" command to view detailed connection logs
+- Background connection mode (no terminal windows opening for connections)
+- Secure password handling that prevents password exposure in terminal
+- Enhanced connection feedback with more detailed status messages
+
+### Changed
+- Improved VPN connection/disconnection process to work in the background
+- Enhanced error handling and user feedback
+- More detailed logging of connection events in Output panel
+
+## [1.1.3] - 2025-04-25
+
+### Added
+- Added gifs to README.md for better understanding of extension usage
+
 ## [1.1.2] - 2025-04-25
 
 ### Added
@@ -90,7 +109,9 @@ All notable changes to the "openfortivpn-connector" extension will be documented
 - Terminal-based openfortivpn execution support
 - macOS and Linux support
 
-[Unreleased]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.4...HEAD
+[1.1.4]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.3...v1.1.4
+[1.1.3]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/comsa33/openforticlient-vpn/compare/v1.0.3...v1.1.0
