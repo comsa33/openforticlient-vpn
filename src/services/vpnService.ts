@@ -113,16 +113,20 @@ export class VpnService {
         } else {
             if (this._reconnectState === ReconnectState.MaxRetriesReached) {
                 this._statusBarItem.text = "$(shield) VPN: Reconnect Failed";
+                this._statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
             } else {
                 this._statusBarItem.text = "$(shield) VPN: Disconnected";
+                this._statusBarItem.backgroundColor = undefined;
             }
-            this._statusBarItem.backgroundColor = undefined;
         }
         
         // Update context for command visibility in menus
         vscode.commands.executeCommand('setContext', 'openfortivpn:isConnected', this._isConnected);
         vscode.commands.executeCommand('setContext', 'openfortivpn:isReconnecting', 
             this._reconnectState === ReconnectState.Attempting);
+        // Add context for max retries reached state
+        vscode.commands.executeCommand('setContext', 'openfortivpn:maxRetriesReached', 
+            this._reconnectState === ReconnectState.MaxRetriesReached);
     }
     
     /**
