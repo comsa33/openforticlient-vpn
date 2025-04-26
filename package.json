@@ -3,7 +3,7 @@
   "icon": "images/openfortivpn-connector.png",
   "displayName": "OpenFortiVPN Connector",
   "description": "A VS Code extension to manage and connect to Fortinet VPNs using openfortivpn.",
-  "version": "1.1.4",
+  "version": "1.2.0",
   "publisher": "RuoLee",
   "license": "MIT",
   "engines": {
@@ -29,7 +29,8 @@
     "macos",
     "connect",
     "vscode",
-    "tunnel"
+    "tunnel",
+    "schedule"
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
@@ -125,6 +126,47 @@
         "command": "openfortivpn-connector.retryConnection",
         "title": "OpenFortiVPN: Retry Connection",
         "icon": "$(debug-restart)"
+      },
+      {
+        "command": "openfortivpn-connector.createSchedule",
+        "title": "OpenFortiVPN: Create New Schedule",
+        "icon": "$(add)"
+      },
+      {
+        "command": "openfortivpn-connector.editSchedule",
+        "title": "OpenFortiVPN: Edit Schedule",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "openfortivpn-connector.deleteSchedule",
+        "title": "OpenFortiVPN: Delete Schedule",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "openfortivpn-connector.toggleSchedule",
+        "title": "OpenFortiVPN: Enable/Disable Schedule",
+        "icon": "$(toggle-on)"
+      },
+      {
+        "command": "openfortivpn-connector.testSchedule",
+        "title": "OpenFortiVPN: Test Schedule",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "openfortivpn-connector.runScheduleNow",
+        "title": "OpenFortiVPN: Run Schedule Now",
+        "icon": "$(play)"
+      },
+
+      {
+        "command": "openfortivpn-connector.refreshSchedules",
+        "title": "OpenFortiVPN: Refresh Schedules",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "openfortivpn-connector.toggleScheduleFromTreeItem",
+        "title": "OpenFortiVPN: Toggle Schedule",
+        "icon": "$(toggle-on)"
       }
     ],
     "viewsContainers": {
@@ -141,6 +183,10 @@
         {
           "id": "openfortivpnProfiles",
           "name": "VPN Profiles"
+        },
+        {
+          "id": "openfortivpnSchedules",
+          "name": "VPN Schedules"
         },
         {
           "id": "openfortivpnMetrics",
@@ -179,6 +225,16 @@
           "command": "openfortivpn-connector.showLogs",
           "when": "view == openfortivpnProfiles",
           "group": "navigation@3"
+        },
+        {
+          "command": "openfortivpn-connector.createSchedule",
+          "when": "view == openfortivpnSchedules",
+          "group": "navigation@1"
+        },
+        {
+          "command": "openfortivpn-connector.refreshSchedules",
+          "when": "view == openfortivpnSchedules",
+          "group": "navigation@2"
         },
         {
           "command": "openfortivpn-connector.refreshMetrics",
@@ -221,6 +277,31 @@
           "command": "openfortivpn-connector.deleteProfile",
           "when": "view == openfortivpnProfiles",
           "group": "9_cutcopypaste"
+        },
+        {
+          "command": "openfortivpn-connector.testSchedule",
+          "when": "view == openfortivpnSchedules",
+          "group": "inline@1"
+        },
+        {
+          "command": "openfortivpn-connector.toggleSchedule",
+          "when": "view == openfortivpnSchedules",
+          "group": "inline@2"
+        },
+        {
+          "command": "openfortivpn-connector.editSchedule",
+          "when": "view == openfortivpnSchedules",
+          "group": "1_modification"
+        },
+        {
+          "command": "openfortivpn-connector.toggleSchedule",
+          "when": "view == openfortivpnSchedules",
+          "group": "1_modification"
+        },
+        {
+          "command": "openfortivpn-connector.deleteSchedule",
+          "when": "view == openfortivpnSchedules",
+          "group": "9_cutcopypaste"
         }
       ],
       "commandPalette": [
@@ -243,6 +324,14 @@
         {
           "command": "openfortivpn-connector.retryConnection",
           "when": "openfortivpn:maxRetriesReached"
+        },
+        {
+          "command": "openfortivpn-connector.createSchedule",
+          "when": "true"
+        },
+        {
+          "command": "openfortivpn-connector.refreshSchedules",
+          "when": "true"
         }
       ]
     },
@@ -289,6 +378,13 @@
           "minimum": 5,
           "maximum": 60,
           "description": "Interval (in seconds) between reconnection attempts (5-60)"
+        },
+        "openfortivpn-connector.scheduleCheckInterval": {
+          "type": "number",
+          "default": 60,
+          "minimum": 10,
+          "maximum": 300,
+          "description": "Interval (in seconds) to check scheduled VPN connections (10-300)"
         }
       }
     }

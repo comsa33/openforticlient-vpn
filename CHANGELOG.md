@@ -5,6 +5,14 @@ All notable changes to the "openfortivpn-connector" extension will be documented
 ## [1.2.0] - 2025-04-26
 
 ### Added
+- **Schedule-based Auto Connect/Disconnect Feature**
+  - Automatically connect or disconnect VPN at specified times
+  - Various repeat options (once, daily, specific days of the week)
+  - Enable/disable schedules individually
+  - Manual execution option for schedules
+  - Dedicated VPN Schedule Management view in the Activity Bar
+  - User-friendly interface for creating and editing schedules
+
 - **Auto-Reconnect Feature**
   - Automatic reconnection when VPN connection is lost
   - Configurable reconnection attempts and intervals
