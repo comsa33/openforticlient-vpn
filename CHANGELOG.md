@@ -2,6 +2,81 @@
 
 All notable changes to the "openfortivpn-connector" extension will be documented in this file.
 
+## [Unreleased]
+- **Future Features**
+  - Support for Windows OS
+  - Splitting tunneling support
+  - Management of trusted certificates
+  - Integration with other VPN services
+
+## [1.2.1] - 2025-04-26
+### Changed
+- **Improved User Interface**
+  - Added Password Management button in the Profile Explorer for easy access to password management features
+  - Added Edit Profile button in the Profile Explorer for quick access to profile editing
+  - Added Delete Profile button in the Profile Explorer for easy profile deletion
+
+## [1.2.0] - 2025-04-26
+
+### Added
+- **Schedule-based Auto Connect/Disconnect Feature**
+  - Automatically connect or disconnect VPN at specified times
+  - Various repeat options (once, daily, specific days of the week)
+  - Enable/disable schedules individually
+  - Manual execution option for schedules
+  - Dedicated VPN Schedule Management view in the Activity Bar
+  - User-friendly interface for creating and editing schedules
+
+- **Auto-Reconnect Feature**
+  - Automatic reconnection when VPN connection is lost
+  - Configurable reconnection attempts and intervals
+  - Visual indicators for reconnection status in status bar and profile view
+  - Manual control to cancel or retry reconnection
+  - User configuration options:
+    - Enable/disable auto-reconnect
+    - Maximum number of reconnection attempts (1-10)
+    - Interval between reconnection attempts (5-60 seconds)
+
+### Fixed
+- **Profile Switching Issues**
+  - Fixed a bug where switching between VPN profiles didn't properly disconnect the active profile
+  - Implemented automatic disconnection of the current profile before connecting to a new one
+  - Resolved UI inconsistency where the new profile would appear connected in the UI but the original connection remained active
+  - Improved scheduled connections to properly disconnect an active profile before connecting to a different one
+  - Added a short delay between disconnect and connect operations to ensure clean profile transitions
+
+## [1.1.4] - 2025-04-26
+
+### Added
+- **Connection Metrics and Statistics**
+  - Real-time connection speed monitoring (upload/download)
+  - Connection duration tracking
+  - Data usage statistics (total upload/download)
+  - New "VPN Connection Metrics" view in the activity bar showing:
+    - Current connection status
+    - Upload and download speeds
+    - Total data transferred
+    - Connection duration
+  - Export metrics data to JSON files for further analysis
+  - User-configurable metrics refresh interval (1-60 seconds)
+- Connection logging functionality with detailed connection status information
+- New "Show Connection Logs" command to view detailed connection logs
+- Background connection mode (no terminal windows opening for connections)
+- Secure password handling that prevents password exposure in terminal
+- Enhanced connection feedback with more detailed status messages
+
+### Changed
+- Implemented tree-based view for connection metrics for improved stability
+- Improved VPN connection/disconnection process to work in the background
+- Enhanced error handling and user feedback
+- More detailed logging of connection events in Output panel
+- Optimized refresh rate for metrics to reduce resource usage
+
+## [1.1.3] - 2025-04-25
+
+### Added
+- Added gifs to README.md for better understanding of extension usage
+
 ## [1.1.2] - 2025-04-25
 
 ### Added
@@ -90,7 +165,10 @@ All notable changes to the "openfortivpn-connector" extension will be documented
 - Terminal-based openfortivpn execution support
 - macOS and Linux support
 
-[Unreleased]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/comsa33/openforticlient-vpn/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.4...v1.2.0
+[1.1.4]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.3...v1.1.4
+[1.1.3]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/comsa33/openforticlient-vpn/compare/v1.0.3...v1.1.0

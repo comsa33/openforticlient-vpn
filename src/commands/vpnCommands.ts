@@ -132,4 +132,21 @@ export function registerVpnCommands(
             return vpnService.clearPassword(activeProfile);
         })
     );
+    
+    // Auto-reconnect commands
+    context.subscriptions.push(
+        vscode.commands.registerCommand('openfortivpn-connector.cancelAutoReconnect', async () => {
+            vpnService.cancelAutoReconnect();
+            vscode.window.showInformationMessage('Auto-reconnect process has been canceled.');
+        })
+    );
+    
+    context.subscriptions.push(
+        vscode.commands.registerCommand('openfortivpn-connector.retryConnection', async () => {
+            const success = await vpnService.retryConnection();
+            if (!success) {
+                vscode.window.showWarningMessage('Cannot retry connection. No previous connection information available.');
+            }
+        })
+    );
 }

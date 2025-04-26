@@ -16,10 +16,18 @@ export class ProfileTreeItem extends vscode.TreeItem {
         
         this.tooltip = `${profile.host}:${profile.port} (${profile.username})`;
         
+        // Get reconnect state
+        const isReconnecting = vpnService.reconnectState === 1; // ReconnectState.Attempting
+        const reconnectFailed = vpnService.reconnectState === 2; // ReconnectState.MaxRetriesReached
+        
         // Set description based on profile status
         if (profile.isActive) {
             if (vpnService.isConnected) {
                 this.description = 'Active (Connected)';
+            } else if (isReconnecting) {
+                this.description = `Active (Reconnecting... ${vpnService.reconnectAttempts})`;
+            } else if (reconnectFailed) {
+                this.description = 'Active (Reconnect Failed)';
             } else if (vpnService.isConnecting) {
                 this.description = 'Active (Connecting...)';
             } else {
@@ -33,6 +41,10 @@ export class ProfileTreeItem extends vscode.TreeItem {
         if (profile.isActive) {
             if (vpnService.isConnected) {
                 this.iconPath = new vscode.ThemeIcon('shield', new vscode.ThemeColor('testing.iconPassed'));
+            } else if (isReconnecting) {
+                this.iconPath = new vscode.ThemeIcon('shield', new vscode.ThemeColor('testing.iconQueued'));
+            } else if (reconnectFailed) {
+                this.iconPath = new vscode.ThemeIcon('shield', new vscode.ThemeColor('testing.iconFailed'));
             } else if (vpnService.isConnecting) {
                 this.iconPath = new vscode.ThemeIcon('shield', new vscode.ThemeColor('testing.iconQueued'));
             } else {
@@ -42,7 +54,18 @@ export class ProfileTreeItem extends vscode.TreeItem {
             this.iconPath = new vscode.ThemeIcon('lock');
         }
         
-        this.contextValue = profile.isActive ? 'activeProfile' : 'profile';
+        // Set context value for menu visibility
+        if (profile.isActive) {
+            if (reconnectFailed) {
+                this.contextValue = 'activeProfileReconnectFailed';
+            } else if (isReconnecting) {
+                this.contextValue = 'activeProfileReconnecting'; 
+            } else {
+                this.contextValue = 'activeProfile';
+            }
+        } else {
+            this.contextValue = 'profile';
+        }
     }
 }
 
