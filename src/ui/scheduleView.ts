@@ -71,7 +71,7 @@ export class ScheduleTreeItem extends vscode.TreeItem {
             }
         }
         
-        // Set context value for command visibility
+        // Set context value for command visibility - ensure this matches package.json when conditions
         this.contextValue = schedule.enabled ? 'enabledSchedule' : 'disabledSchedule';
     }
 }

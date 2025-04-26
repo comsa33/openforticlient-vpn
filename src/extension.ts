@@ -38,10 +38,18 @@ export async function activate(context: vscode.ExtensionContext) {
         
     // Make sure schedules are checked immediately on startup
     setTimeout(() => {
-        logger.log('Performing initial schedule check');
-        // This is a workaround to make sure any pending schedules are checked soon after startup
+        logger.log('Performing initial schedule check on extension activation');
+        
+        // Force a schedule check immediately instead of just refreshing the view
+        scheduleService['_checkSchedules']().then(() => {
+            logger.log('Initial schedule check completed');
+        }).catch(err => {
+            logger.error('Error during initial schedule check', err);
+        });
+        
+        // Also refresh the UI
         vscode.commands.executeCommand('openfortivpn-connector.refreshSchedules');
-    }, 5000); // Wait 5 seconds to ensure everything is initialized
+    }, 2000);
     
     // Configure status bar item
     createStatusBarItem(statusBarItem, profileManager, vpnService);

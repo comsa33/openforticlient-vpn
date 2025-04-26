@@ -61,7 +61,26 @@ export class ScheduleService {
         // Update all schedule next run times
         this._updateAllNextRunTimes();
         
-        // Start schedule check timer
+        // Log the schedules for debugging
+        this._logger.log(`Loaded ${this._schedules.schedules.length} schedules`);
+        this._schedules.schedules.forEach(schedule => {
+            if (schedule.enabled) {
+                const nextRunText = schedule.nextRun 
+                    ? new Date(schedule.nextRun).toLocaleString() 
+                    : 'Not calculated';
+                this._logger.log(`Schedule "${schedule.name}" (${schedule.type}) - Next run: ${nextRunText}`);
+            }
+        });
+        
+        // Start schedule check timer with immediate first check
+        this._logger.log('Starting schedule check timer with interval: ' + (this._checkInterval / 1000) + 's');
+        
+        // First do an immediate check
+        this._checkSchedules().catch(err => 
+            this._logger.error('Error in initial schedule check', err)
+        );
+        
+        // Then start the regular interval
         this._scheduleTimer = setInterval(() => this._checkSchedules(), this._checkInterval);
         
         // Add listener for configuration changes
@@ -72,8 +91,6 @@ export class ScheduleService {
                 }
             })
         );
-        
-        this._logger.log('Schedule service initialized with check interval: ' + (this._checkInterval / 1000) + 's');
     }
     
     /**
@@ -278,6 +295,9 @@ export class ScheduleService {
         const now = Date.now();
         const margin = this._checkInterval; // Use check interval as margin to avoid missing scheduled times
         
+        // Debug log to verify the service is checking schedules
+        this._logger.log(`Checking schedules at ${new Date(now).toLocaleString()}`);
+        
         // Find schedules ready to run
         const runnableSchedules = this._schedules.schedules.filter(s => {
             // Must be enabled and have a next run time
@@ -285,12 +305,19 @@ export class ScheduleService {
                 return false;
             }
             
-            // Check if current time has reached or passed the scheduled time
-            // Add a margin to catch times that occurred between checks
-            if (now >= s.nextRun && (!s.lastRun || s.lastRun < s.nextRun)) {
-                // The schedule should run if:
-                // 1. Current time has reached or passed the scheduled time
-                // 2. Either it hasn't run before or last run was before the scheduled time
+            // Check if current time has reached or passed the scheduled time 
+            // Add a margin to actually use the defined margin to avoid missing scheduled times 
+            // that occur between checks
+            const isTimeToRun = now >= (s.nextRun - margin);
+            const hasNotRunYet = !s.lastRun || s.lastRun < s.nextRun;
+            
+            // Improved clarity with explicit conditions
+            if (isTimeToRun && hasNotRunYet) {
+                this._logger.log(`Schedule "${s.name}" is ready to run:
+                    - Current time: ${new Date(now).toLocaleString()}
+                    - Scheduled time: ${new Date(s.nextRun).toLocaleString()}
+                    - Last run: ${s.lastRun ? new Date(s.lastRun).toLocaleString() : 'Never'}
+                    - Using margin of ${margin/1000} seconds`);
                 return true;
             }
             
@@ -298,6 +325,8 @@ export class ScheduleService {
         });
         
         if (runnableSchedules.length === 0) {
+            // No need to log every time, but useful for debugging
+            // this._logger.log(`No schedules ready to run at ${new Date(now).toLocaleString()}`);
             return;
         }
         

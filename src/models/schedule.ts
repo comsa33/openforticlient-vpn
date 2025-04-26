@@ -112,6 +112,8 @@ export function calculateNextRun(schedule: VpnSchedule): number {
     const [hours, minutes] = schedule.time.split(':').map(Number);
     
     // Base time to start with (today at the specified time)
+    // Note: JavaScript Date is zero-indexed for months, but we're handling year/month/date
+    // directly from now object so no adjustment needed
     const targetTime = new Date(
         now.getFullYear(),
         now.getMonth(),
@@ -122,20 +124,30 @@ export function calculateNextRun(schedule: VpnSchedule): number {
         0 // Set milliseconds to 0 for precise comparison
     );
     
+    // Add extra logging here to verify calculation
+    console.log(`Calculating next run for "${schedule.name}":
+        - Target time: ${targetTime.toLocaleString()}
+        - Now: ${now.toLocaleString()}
+        - Repeat type: ${schedule.repeatType}
+        - Time: ${schedule.time}`);
+    
     // If target time has already passed today, calculate next occurrence
     if (targetTime.getTime() <= now.getTime()) {
         if (schedule.repeatType === RepeatType.Once) {
             // For one-time schedule, set to tomorrow same time
             targetTime.setDate(targetTime.getDate() + 1);
+            console.log(`- One time schedule, moved to tomorrow: ${targetTime.toLocaleString()}`);
         } else if (schedule.repeatType === RepeatType.Daily) {
             // For daily schedule, set to tomorrow same time
             targetTime.setDate(targetTime.getDate() + 1);
+            console.log(`- Daily schedule, moved to tomorrow: ${targetTime.toLocaleString()}`);
         } else if (schedule.repeatType === RepeatType.Weekly && schedule.weekdays) {
             // For weekly schedule, find the next specified weekday
             const currentDayOfWeek = now.getDay();
             
             // Sort weekdays to make search easier
             const sortedWeekdays = [...schedule.weekdays].sort((a, b) => a - b);
+            console.log(`- Weekly schedule, current day: ${currentDayOfWeek}, available days: ${sortedWeekdays.join(',')}`);
             
             // Find next weekday after current day
             const nextDay = sortedWeekdays.find(day => day > currentDayOfWeek);
@@ -144,21 +156,27 @@ export function calculateNextRun(schedule: VpnSchedule): number {
                 // Found a day later this week
                 const daysToAdd = nextDay - currentDayOfWeek;
                 targetTime.setDate(targetTime.getDate() + daysToAdd);
+                console.log(`- Found day later this week (${nextDay}), adding ${daysToAdd} days: ${targetTime.toLocaleString()}`);
             } else {
                 // No days later this week, go to first day next week
                 const firstDayNextWeek = sortedWeekdays[0];
                 const daysToAdd = 7 - currentDayOfWeek + firstDayNextWeek;
                 targetTime.setDate(targetTime.getDate() + daysToAdd);
+                console.log(`- No days later this week, going to next week day ${firstDayNextWeek}, adding ${daysToAdd} days: ${targetTime.toLocaleString()}`);
             }
         }
     } else {
         // Target time is still in the future today
+        console.log(`- Target time is in the future today`);
+        
         // Check if it's a weekly schedule and today is not in the specified weekdays
         if (schedule.repeatType === RepeatType.Weekly && schedule.weekdays) {
             const currentDayOfWeek = now.getDay();
             
             // If today is not in the specified weekdays, find the next weekday
             if (!schedule.weekdays.includes(currentDayOfWeek as Weekday)) {
+                console.log(`- Today (${currentDayOfWeek}) is not in specified weekdays ${schedule.weekdays.join(',')}`);
+                
                 const sortedWeekdays = [...schedule.weekdays].sort((a, b) => a - b);
                 
                 // Find next weekday after current day
@@ -168,16 +186,21 @@ export function calculateNextRun(schedule: VpnSchedule): number {
                     // Found a day later this week
                     const daysToAdd = nextDay - currentDayOfWeek;
                     targetTime.setDate(targetTime.getDate() + daysToAdd);
+                    console.log(`- Moving to day ${nextDay}, adding ${daysToAdd} days: ${targetTime.toLocaleString()}`);
                 } else {
                     // No days later this week, go to first day next week
                     const firstDayNextWeek = sortedWeekdays[0];
                     const daysToAdd = 7 - currentDayOfWeek + firstDayNextWeek;
                     targetTime.setDate(targetTime.getDate() + daysToAdd);
+                    console.log(`- No days this week, moving to next week day ${firstDayNextWeek}, adding ${daysToAdd} days: ${targetTime.toLocaleString()}`);
                 }
+            } else {
+                console.log(`- Today (${currentDayOfWeek}) is in specified weekdays, keeping today's date`);
             }
         }
     }
     
+    console.log(`- Final next run time: ${targetTime.toLocaleString()} (${targetTime.getTime()})`);
     return targetTime.getTime();
 }
 
