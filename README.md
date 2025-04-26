@@ -138,7 +138,6 @@ The extension allows you to schedule automatic VPN connections and disconnection
 
 4. Manage your schedules:
    - Enable/Disable: Right-click and select "Enable/Disable Schedule"
-   - Run Now: Right-click and select "Run Schedule Now" to execute immediately
    - Edit: Right-click and select "Edit Schedule" to modify settings
    - Delete: Right-click and select "Delete Schedule" to remove
 

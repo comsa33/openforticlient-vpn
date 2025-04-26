@@ -148,12 +148,6 @@
         "icon": "$(color-mode)"
       },
       {
-        "command": "openfortivpn-connector.runScheduleNow",
-        "title": "OpenFortiVPN: Run Schedule Now",
-        "icon": "$(play-circle)"
-      },
-
-      {
         "command": "openfortivpn-connector.refreshSchedules",
         "title": "OpenFortiVPN: Refresh Schedules",
         "icon": "$(refresh)"
@@ -269,10 +263,25 @@
           "group": "9_cutcopypaste"
         },
         {
-          "command": "openfortivpn-connector.toggleSchedule",
-          "when": "view == openfortivpnSchedules && (viewItem == enabledSchedule || viewItem == disabledSchedule)",
-          "group": "inline"
+          "command": "openfortivpn-connector.deleteSchedule",
+          "when": "view == openfortivpnSchedules",
+          "group": "inline@3"
         },
+        {
+          "command": "openfortivpn-connector.editSchedule",
+          "when": "view == openfortivpnSchedules",
+          "group": "inline@2"
+        },
+        {
+          "command": "openfortivpn-connector.toggleSchedule",
+          "when": "view == openfortivpnSchedules",
+          "group": "inline@1"
+        },        
+        {
+          "command": "openfortivpn-connector.toggleSchedule",
+          "when": "view == openfortivpnSchedules",
+          "group": "1_modification"
+        },        
         {
           "command": "openfortivpn-connector.editSchedule",
           "when": "view == openfortivpnSchedules",
@@ -281,7 +290,7 @@
         {
           "command": "openfortivpn-connector.deleteSchedule",
           "when": "view == openfortivpnSchedules",
-          "group": "9_cutcopypaste"
+          "group": "1_modification"
         }
       ],
       "commandPalette": [
