@@ -120,6 +120,29 @@ The metrics view provides essential information about your VPN connection, allow
 
 All metrics are collected locally and displayed in real-time for the current VPN session.
 
+### Using Scheduled VPN Connections (New in 1.2.0)
+
+<img src="https://raw.githubusercontent.com/comsa33/openforticlient-vpn/main/images/openfortivpn-connector-extension-schedule.gif" width="600" alt="OpenFortiVPN Scheduled Connections Preview"><br>
+
+The extension allows you to schedule automatic VPN connections and disconnections:
+
+1. Click on the "VPN Schedules" section in the OpenFortiVPN activity bar
+2. Click the "+" icon to create a new schedule
+3. Configure your schedule:
+   - Name: Enter a descriptive name for the schedule
+   - Type: Choose "Connect" or "Disconnect"
+   - Profile: (For connect schedules) Select the VPN profile to use
+   - Time: Enter the time in 24-hour format (e.g., 09:00)
+   - Repeat: Choose between "Once", "Daily", or "Weekly"
+   - Weekdays: (For weekly schedules) Select which days to run
+
+4. Manage your schedules:
+   - Enable/Disable: Right-click and select "Enable/Disable Schedule"
+   - Edit: Right-click and select "Edit Schedule" to modify settings
+   - Delete: Right-click and select "Delete Schedule" to remove
+
+The extension will automatically run your schedules in the background, even when you're not actively using the schedule view.
+
 ## Visual Indicators
 
 - In Profile Explorer:
@@ -173,6 +196,11 @@ This extension provides the following settings:
 * `OpenFortiVPN: Export Connection Metrics` - Export metrics data to JSON file
 * `OpenFortiVPN: Cancel Auto-Reconnect` - Cancel the auto-reconnect process (New in 1.2.0)
 * `OpenFortiVPN: Retry Connection` - Retry connection after reconnection failure (New in 1.2.0)
+* `OpenFortiVPN: Create New Schedule` - Create a new VPN connection/disconnection schedule (New in 1.2.0)
+* `OpenFortiVPN: Edit Schedule` - Edit an existing schedule (New in 1.2.0)
+* `OpenFortiVPN: Delete Schedule` - Delete a schedule (New in 1.2.0)
+* `OpenFortiVPN: Enable/Disable Schedule` - Toggle schedule active state (New in 1.2.0)
+* `OpenFortiVPN: Refresh Schedules` - Refresh the schedules view (New in 1.2.0)
 
 ## Troubleshooting
 
