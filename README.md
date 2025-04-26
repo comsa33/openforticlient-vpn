@@ -201,7 +201,6 @@ This extension provides the following settings:
 * `OpenFortiVPN: Edit Schedule` - Edit an existing schedule (New in 1.2.0)
 * `OpenFortiVPN: Delete Schedule` - Delete a schedule (New in 1.2.0)
 * `OpenFortiVPN: Enable/Disable Schedule` - Toggle schedule active state (New in 1.2.0)
-* `OpenFortiVPN: Run Schedule Now` - Execute a schedule immediately (New in 1.2.0)
 * `OpenFortiVPN: Refresh Schedules` - Refresh the schedules view (New in 1.2.0)
 
 ## Troubleshooting
