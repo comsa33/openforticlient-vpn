@@ -273,9 +273,19 @@ export class VpnService {
      * @param isReconnectAttempt Whether this is a reconnection attempt
      */
     public async connect(profile: VpnProfile, isReconnectAttempt: boolean = false): Promise<boolean> {
+        // If already connected or connecting, disconnect first
         if (this._isConnected || this._isConnecting) {
-            this._logger.log('VPN is already connected or connecting.', !isReconnectAttempt);
+            this._logger.log('VPN is already connected. Disconnecting current connection before connecting to new profile...', !isReconnectAttempt);
+            
+            // Disconnect current connection
+            const disconnected = await this.disconnect(false);
+            if (!disconnected) {
+            this._logger.error('Failed to disconnect current VPN connection', null, !isReconnectAttempt);
             return false;
+            }
+            
+            // Wait briefly to ensure disconnection is complete
+            await new Promise(resolve => setTimeout(resolve, 1000));
         }
         
         if (!isReconnectAttempt) {

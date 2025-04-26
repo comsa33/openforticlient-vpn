@@ -23,6 +23,14 @@ All notable changes to the "openfortivpn-connector" extension will be documented
     - Maximum number of reconnection attempts (1-10)
     - Interval between reconnection attempts (5-60 seconds)
 
+### Fixed
+- **Profile Switching Issues**
+  - Fixed a bug where switching between VPN profiles didn't properly disconnect the active profile
+  - Implemented automatic disconnection of the current profile before connecting to a new one
+  - Resolved UI inconsistency where the new profile would appear connected in the UI but the original connection remained active
+  - Improved scheduled connections to properly disconnect an active profile before connecting to a different one
+  - Added a short delay between disconnect and connect operations to ensure clean profile transitions
+
 ## [1.1.4] - 2025-04-26
 
 ### Added
