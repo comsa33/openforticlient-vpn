@@ -2,6 +2,20 @@
 
 All notable changes to the "openfortivpn-connector" extension will be documented in this file.
 
+## [Unreleased]
+- **Future Features**
+  - Support for Windows OS
+  - Splitting tunneling support
+  - Management of trusted certificates
+  - Integration with other VPN services
+
+## [1.2.1] - 2025-04-26
+### Changed
+- **Improved User Interface**
+  - Added Password Management button in the Profile Explorer for easy access to password management features
+  - Added Edit Profile button in the Profile Explorer for quick access to profile editing
+  - Added Delete Profile button in the Profile Explorer for easy profile deletion
+
 ## [1.2.0] - 2025-04-26
 
 ### Added
