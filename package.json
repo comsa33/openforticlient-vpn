@@ -115,6 +115,16 @@
         "command": "openfortivpn-connector.exportMetrics",
         "title": "OpenFortiVPN: Export Connection Metrics",
         "icon": "$(export)"
+      },
+      {
+        "command": "openfortivpn-connector.cancelAutoReconnect",
+        "title": "OpenFortiVPN: Cancel Auto-Reconnect",
+        "icon": "$(stop-circle)"
+      },
+      {
+        "command": "openfortivpn-connector.retryConnection",
+        "title": "OpenFortiVPN: Retry Connection",
+        "icon": "$(debug-restart)"
       }
     ],
     "viewsContainers": {
@@ -142,12 +152,22 @@
       "view/title": [
         {
           "command": "openfortivpn-connector.connectVpn",
-          "when": "view == openfortivpnProfiles && !openfortivpn:isConnected",
+          "when": "view == openfortivpnProfiles && !openfortivpn:isConnected && !openfortivpn:isReconnecting",
           "group": "navigation@1"
         },
         {
           "command": "openfortivpn-connector.disconnectVpn",
           "when": "view == openfortivpnProfiles && openfortivpn:isConnected",
+          "group": "navigation@1"
+        },
+        {
+          "command": "openfortivpn-connector.cancelAutoReconnect",
+          "when": "view == openfortivpnProfiles && openfortivpn:isReconnecting",
+          "group": "navigation@1"
+        },
+        {
+          "command": "openfortivpn-connector.retryConnection",
+          "when": "view == openfortivpnProfiles && openfortivpn:maxRetriesReached",
           "group": "navigation@1"
         },
         {
@@ -215,6 +235,14 @@
         {
           "command": "openfortivpn-connector.exportMetrics",
           "when": "true"
+        },
+        {
+          "command": "openfortivpn-connector.cancelAutoReconnect",
+          "when": "openfortivpn:isReconnecting"
+        },
+        {
+          "command": "openfortivpn-connector.retryConnection",
+          "when": "openfortivpn:maxRetriesReached"
         }
       ]
     },
@@ -242,6 +270,25 @@
           "minimum": 1,
           "maximum": 60,
           "description": "Interval (in seconds) for refreshing VPN connection metrics (1-60)"
+        },
+        "openfortivpn-connector.autoReconnect": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically attempt to reconnect when VPN connection is lost"
+        },
+        "openfortivpn-connector.autoReconnectMaxRetries": {
+          "type": "number",
+          "default": 3,
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Maximum number of reconnection attempts (1-10)"
+        },
+        "openfortivpn-connector.autoReconnectInterval": {
+          "type": "number",
+          "default": 10,
+          "minimum": 5,
+          "maximum": 60,
+          "description": "Interval (in seconds) between reconnection attempts (5-60)"
         }
       }
     }
