@@ -2,6 +2,19 @@
 
 All notable changes to the "openfortivpn-connector" extension will be documented in this file.
 
+## [1.2.0] - 2025-04-26
+
+### Added
+- **Auto-Reconnect Feature**
+  - Automatic reconnection when VPN connection is lost
+  - Configurable reconnection attempts and intervals
+  - Visual indicators for reconnection status in status bar and profile view
+  - Manual control to cancel or retry reconnection
+  - User configuration options:
+    - Enable/disable auto-reconnect
+    - Maximum number of reconnection attempts (1-10)
+    - Interval between reconnection attempts (5-60 seconds)
+
 ## [1.1.4] - 2025-04-26
 
 ### Added
@@ -122,7 +135,8 @@ All notable changes to the "openfortivpn-connector" extension will be documented
 - Terminal-based openfortivpn execution support
 - macOS and Linux support
 
-[Unreleased]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.4...HEAD
+[Unreleased]: https://github.com/comsa33/openforticlient-vpn/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.4...v1.2.0
 [1.1.4]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/comsa33/openforticlient-vpn/compare/v1.1.1...v1.1.2

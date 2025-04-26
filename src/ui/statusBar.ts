@@ -38,14 +38,38 @@ function updateStatusBar(
 ): void {
     const activeProfile = profileManager.getActiveProfile();
     
-    if (vpnService.isConnecting) {
+    // Check if VPN is reconnecting
+    if (vpnService.reconnectState === 1) { // ReconnectState.Attempting
+        statusBarItem.text = `$(shield) VPN: Reconnecting... (${vpnService.reconnectAttempts})`;
+        if (activeProfile) {
+            statusBarItem.tooltip = `Attempting to reconnect to ${activeProfile.name} (${activeProfile.host})`;
+        } else {
+            statusBarItem.tooltip = "Attempting to reconnect to VPN...";
+        }
+        statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+    }
+    // Check if max retries reached
+    else if (vpnService.reconnectState === 2) { // ReconnectState.MaxRetriesReached
+        statusBarItem.text = `$(shield) VPN: Reconnect Failed`;
+        if (activeProfile) {
+            statusBarItem.tooltip = `Failed to reconnect to ${activeProfile.name}. Click to retry.`;
+        } else {
+            statusBarItem.tooltip = "Failed to reconnect to VPN. Click to retry.";
+        }
+        statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
+    }
+    // Standard connecting state
+    else if (vpnService.isConnecting) {
         statusBarItem.text = `$(shield) VPN: Connecting...`;
         if (activeProfile) {
             statusBarItem.tooltip = `Connecting to ${activeProfile.name} (${activeProfile.host})`;
         } else {
             statusBarItem.tooltip = "Connecting to VPN...";
         }
-    } else if (vpnService.isConnected) {
+        statusBarItem.backgroundColor = undefined;
+    }
+    // Connected state
+    else if (vpnService.isConnected) {
         statusBarItem.text = `$(shield) VPN: Connected`;
         statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
         if (activeProfile) {
@@ -53,7 +77,9 @@ function updateStatusBar(
         } else {
             statusBarItem.tooltip = "Connected to VPN";
         }
-    } else {
+    }
+    // Disconnected state
+    else {
         statusBarItem.text = `$(shield) VPN: Disconnected`;
         statusBarItem.backgroundColor = undefined;
         if (activeProfile) {
@@ -62,4 +88,8 @@ function updateStatusBar(
             statusBarItem.tooltip = "VPN Disconnected";
         }
     }
+    
+    // Update context for UI visibility
+    vscode.commands.executeCommand('setContext', 'openfortivpn:isReconnecting', vpnService.reconnectState === 1);
+    vscode.commands.executeCommand('setContext', 'openfortivpn:maxRetriesReached', vpnService.reconnectState === 2);
 }
