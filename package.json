@@ -145,31 +145,18 @@
       {
         "command": "openfortivpn-connector.toggleSchedule",
         "title": "OpenFortiVPN: Enable/Disable Schedule",
-        "icon": "$(check-all)"
-      },
-      {
-        "command": "openfortivpn-connector.testSchedule",
-        "title": "OpenFortiVPN: Test Schedule",
-        "icon": "$(play-circle)"
+        "icon": "$(color-mode)"
       },
       {
         "command": "openfortivpn-connector.runScheduleNow",
         "title": "OpenFortiVPN: Run Schedule Now",
-        "icon": "$(play)"
+        "icon": "$(play-circle)"
       },
 
       {
         "command": "openfortivpn-connector.refreshSchedules",
         "title": "OpenFortiVPN: Refresh Schedules",
         "icon": "$(refresh)"
-      },
-      {
-        "command": "openfortivpn-connector.toggleScheduleFromTreeItem",
-        "title": "OpenFortiVPN: Toggle Schedule",
-        "icon": {
-          "light": "$(circle-filled)",
-          "dark": "$(check-all)"
-        }
       }
     ],
     "viewsContainers": {
@@ -282,22 +269,12 @@
           "group": "9_cutcopypaste"
         },
         {
-          "command": "openfortivpn-connector.testSchedule",
-          "when": "view == openfortivpnSchedules",
+          "command": "openfortivpn-connector.toggleSchedule",
+          "when": "view == openfortivpnSchedules && (viewItem == enabledSchedule || viewItem == disabledSchedule)",
           "group": "inline"
         },
         {
-          "command": "openfortivpn-connector.toggleScheduleFromTreeItem",
-          "when": "view == openfortivpnSchedules && (viewItem == enabledSchedule || viewItem == disabledSchedule)",
-          "group": "navigation"
-        },
-        {
           "command": "openfortivpn-connector.editSchedule",
-          "when": "view == openfortivpnSchedules",
-          "group": "1_modification"
-        },
-        {
-          "command": "openfortivpn-connector.toggleSchedule",
           "when": "view == openfortivpnSchedules",
           "group": "1_modification"
         },

@@ -58,30 +58,6 @@ export function registerScheduleCommands(
         })
     );
     
-    // Test run schedule (renamed from "Run Now")
-    context.subscriptions.push(
-        vscode.commands.registerCommand('openfortivpn-connector.testSchedule', async (item) => {
-            if (item && item.schedule) {
-                try {
-                    vscode.window.showInformationMessage(`Testing schedule "${item.schedule.name}"...`);
-                    const success = await scheduleService.runSchedule(item.schedule.id);
-                    if (success) {
-                        vscode.window.showInformationMessage(
-                            `Schedule "${item.schedule.name}" was successfully tested.`
-                        );
-                    } else {
-                        vscode.window.showErrorMessage(
-                            `Schedule "${item.schedule.name}" test failed. Check logs for details.`
-                        );
-                    }
-                } catch (error) {
-                    logger.error(`Error testing schedule`, error);
-                    vscode.window.showErrorMessage(`Error testing schedule: ${error}`);
-                }
-            }
-        })
-    );
-    
     // Refresh schedules view
     context.subscriptions.push(
         vscode.commands.registerCommand('openfortivpn-connector.refreshSchedules', async () => {

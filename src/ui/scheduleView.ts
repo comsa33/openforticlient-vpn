@@ -59,17 +59,21 @@ export class ScheduleTreeItem extends vscode.TreeItem {
         // Set icons based on schedule type and status
         if (schedule.type === 'connect') {
             if (schedule.enabled) {
-                this.iconPath = new vscode.ThemeIcon('plug', schedule.lastRun ? new vscode.ThemeColor('charts.green') : undefined);
+              this.iconPath = new vscode.ThemeIcon('plug', schedule.lastRun ? 
+                new vscode.ThemeColor('charts.green') : undefined);
             } else {
-                this.iconPath = new vscode.ThemeIcon('plug', new vscode.ThemeColor('disabledForeground'));
+              this.iconPath = new vscode.ThemeIcon('plug', 
+                new vscode.ThemeColor('disabledForeground'));
             }
-        } else { // disconnect
+          } else { // disconnect
             if (schedule.enabled) {
-                this.iconPath = new vscode.ThemeIcon('debug-disconnect', schedule.lastRun ? new vscode.ThemeColor('charts.red') : undefined);
+              this.iconPath = new vscode.ThemeIcon('debug-disconnect', schedule.lastRun ? 
+                new vscode.ThemeColor('charts.red') : undefined);
             } else {
-                this.iconPath = new vscode.ThemeIcon('debug-disconnect', new vscode.ThemeColor('disabledForeground'));
+              this.iconPath = new vscode.ThemeIcon('debug-disconnect', 
+                new vscode.ThemeColor('disabledForeground'));
             }
-        }
+          }
         
         // Set context value for command visibility - ensure this matches package.json when conditions
         this.contextValue = schedule.enabled ? 'enabledSchedule' : 'disabledSchedule';
@@ -112,6 +116,14 @@ export class SchedulesProvider implements vscode.TreeDataProvider<ScheduleTreeIt
      * Get tree item for a given element
      */
     getTreeItem(element: ScheduleTreeItem): vscode.TreeItem {
+        // 토글 커맨드와 아이콘 설정
+        element.command = {
+            command: 'openfortivpn-connector.toggleScheduleFromTreeItem',
+            title: 'Toggle Schedule',
+            arguments: [element]
+        };
+        
+        // 원래 있던 return은 유지
         return element;
     }
     
