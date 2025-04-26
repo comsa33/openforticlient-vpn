@@ -107,6 +107,10 @@ export class ScheduleService {
             if (this._scheduleTimer) {
                 clearInterval(this._scheduleTimer);
                 this._scheduleTimer = setInterval(() => this._checkSchedules(), this._checkInterval);
+                if (this._checkInterval < 10000) {
+                    this._checkInterval = 10000; // Enforce minimum 10 seconds
+                    this._logger.log('Schedule check interval was below minimum. Set to 10 seconds.');
+                }
                 this._logger.log('Schedule check interval updated to: ' + (this._checkInterval / 1000) + 's');
             }
         }
