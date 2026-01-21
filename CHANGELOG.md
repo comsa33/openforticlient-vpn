@@ -2,6 +2,17 @@
 
 All notable changes to the "openfortivpn-connector" extension will be documented in this file.
 
+## [1.4.2] - 2026-01-21
+
+### Added
+- Connect button now visible on all profile rows (not just inactive profiles)
+
+### Fixed
+- VPN password now sent only when prompted (timing fix)
+- Certificate hash detection improved with multiple patterns
+- Auto-reconnect no longer triggers after manual disconnect
+- Certificate trust flow reconnection now uses saved passwords
+
 ## [1.4.1] - 2026-01-21
 
 ### Fixed
