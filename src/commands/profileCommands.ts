@@ -136,13 +136,25 @@ async function createProfile(profileManager: ProfileManager): Promise<VpnProfile
         return undefined; // User canceled
     }
     
+    // Ask if using SAML SSO login
+    const useSamlChoice = await vscode.window.showQuickPick(['No (Password)', 'Yes (SAML SSO)'], {
+        placeHolder: 'Use SAML SSO authentication?'
+    });
+    
+    if (useSamlChoice === undefined) {
+        return undefined; // User canceled
+    }
+    
+    const useSamlLogin = useSamlChoice === 'Yes (SAML SSO)';
+    
     // Create the profile
     const profile = await profileManager.createProfile({
         name,
         host,
         port,
         username,
-        trustedCert: trustedCert || undefined
+        trustedCert: trustedCert || undefined,
+        useSamlLogin
     });
     
     vscode.window.showInformationMessage(`VPN profile "${name}" has been created.`);
@@ -205,8 +217,20 @@ async function editProfile(profileManager: ProfileManager, profile: VpnProfile):
         return undefined; // User canceled
     }
     
+    // Ask if using SAML SSO login
+    const useSamlChoice = await vscode.window.showQuickPick(['No (Password)', 'Yes (SAML SSO)'], {
+        placeHolder: 'Use SAML SSO authentication?',
+        // Pre-select based on current profile setting
+    });
+    
+    if (useSamlChoice === undefined) {
+        return undefined; // User canceled
+    }
+    
+    const useSamlLogin = useSamlChoice === 'Yes (SAML SSO)';
+    
     // Update the profile
-    const updatedProfile = { ...profile, name, host, port, username, trustedCert: trustedCert || undefined };
+    const updatedProfile = { ...profile, name, host, port, username, trustedCert: trustedCert || undefined, useSamlLogin };
     await profileManager.updateProfile(updatedProfile);
     
     vscode.window.showInformationMessage(`VPN profile "${name}" has been updated.`);

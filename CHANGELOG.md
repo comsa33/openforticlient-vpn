@@ -2,6 +2,14 @@
 
 All notable changes to the "openfortivpn-connector" extension will be documented in this file.
 
+## [1.4.0] - 2026-01-21
+
+### Added
+- **SAML SSO Authentication Support**
+  - Use `--saml-login` option for SAML-based single sign-on
+  - Automatic browser opening for SAML authentication URL
+  - Profile option to enable SAML login
+
 ## [1.3.1] - 2026-01-21
 
 ### Added

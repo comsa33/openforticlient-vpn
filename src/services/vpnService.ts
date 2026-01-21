@@ -409,7 +409,13 @@ export class VpnService {
             this.resetAutoReconnectState();
         }
         
-        this._logger.log(`${isReconnectAttempt ? 'Reconnecting' : 'Connecting'} to VPN using profile "${profile.name}" (${profile.host}:${profile.port})...`);
+        this._logger.log(`${isReconnectAttempt ? 'Reconnecting' : 'Connecting'} to VPN using profile \"${profile.name}\" (${profile.host}:${profile.port})...`);
+        
+        // Check if using SAML login
+        const useSaml = profile.useSamlLogin === true;
+        if (useSaml) {
+            this._logger.log('Using SAML SSO authentication');
+        }
         
         // Get saved sudo password
         let sudoPassword = await this.context.secrets.get(SUDO_PASSWORD_KEY);
@@ -439,38 +445,49 @@ export class VpnService {
             }
         }
         
-        // Get saved VPN password for this profile
-        let vpnPassword = await this.context.secrets.get(this.getPasswordKey(profile.id));
+        // VPN password is only needed for non-SAML login
+        let vpnPassword: string | undefined = '';
         
-        // If no saved VPN password, ask for it (only for manual connections)
-        if (!vpnPassword && !isReconnectAttempt) {
-            this._logger.log('No saved VPN password found, prompting...');
-            vpnPassword = await vscode.window.showInputBox({
-                prompt: `Enter VPN password for profile "${profile.name}"`,
-                password: true,
-                placeHolder: 'VPN account password'
-            });
+        if (!useSaml) {
+            // Get saved VPN password for this profile
+            vpnPassword = await this.context.secrets.get(this.getPasswordKey(profile.id));
             
-            if (!vpnPassword) {
-                this._logger.log('VPN password entry canceled by user');
+            // If no saved VPN password, ask for it (only for manual connections)
+            if (!vpnPassword && !isReconnectAttempt) {
+                this._logger.log('No saved VPN password found, prompting...');
+                vpnPassword = await vscode.window.showInputBox({
+                    prompt: `Enter VPN password for profile \"${profile.name}\"`,
+                    password: true,
+                    placeHolder: 'VPN account password'
+                });
+                
+                if (!vpnPassword) {
+                    this._logger.log('VPN password entry canceled by user');
+                    return false;
+                }
+                
+                // Ask if user wants to save this password
+                const saveVpnPassword = await vscode.window.showQuickPick(['Yes', 'No'], {
+                    placeHolder: 'Save VPN password for future connections?'
+                });
+                
+                if (saveVpnPassword === 'Yes') {
+                    await this.context.secrets.store(this.getPasswordKey(profile.id), vpnPassword);
+                    this._logger.log('VPN password saved.');
+                }
+            }
+            
+            // Cannot proceed with auto-reconnect if passwords are not available
+            if ((!sudoPassword || !vpnPassword) && isReconnectAttempt) {
+                this._logger.log('Auto-reconnect failed: Missing saved passwords');
                 return false;
             }
-            
-            // Ask if user wants to save this password
-            const saveVpnPassword = await vscode.window.showQuickPick(['Yes', 'No'], {
-                placeHolder: 'Save VPN password for future connections?'
-            });
-            
-            if (saveVpnPassword === 'Yes') {
-                await this.context.secrets.store(this.getPasswordKey(profile.id), vpnPassword);
-                this._logger.log('VPN password saved.');
+        } else {
+            // For SAML, only sudo password is needed for auto-reconnect
+            if (!sudoPassword && isReconnectAttempt) {
+                this._logger.log('Auto-reconnect failed: Missing sudo password');
+                return false;
             }
-        }
-        
-        // Cannot proceed with auto-reconnect if passwords are not available
-        if ((!sudoPassword || !vpnPassword) && isReconnectAttempt) {
-            this._logger.log('Auto-reconnect failed: Missing saved passwords');
-            return false;
         }
         
         try {
@@ -492,15 +509,24 @@ export class VpnService {
                 this._logger.log(`Using trusted certificate: ${profile.trustedCert.substring(0, 16)}...`);
             }
             
+            // Add SAML login option if enabled
+            if (useSaml) {
+                args.push('--saml-login');
+                this._logger.log('SAML login mode enabled');
+            }
+            
             // Create child process
             this._currentProcess = cp.spawn(sudoCmd, args, {
                 stdio: ['pipe', 'pipe', 'pipe']
             });
             
-            // Pass both passwords to stdin: sudo password first, then VPN password
-            if (this._currentProcess.stdin && sudoPassword && vpnPassword) {
+            // Pass passwords to stdin
+            if (this._currentProcess.stdin && sudoPassword) {
                 this._currentProcess.stdin.write(sudoPassword + '\n');
-                this._currentProcess.stdin.write(vpnPassword + '\n');
+                // For non-SAML, also send VPN password
+                if (!useSaml && vpnPassword) {
+                    this._currentProcess.stdin.write(vpnPassword + '\n');
+                }
                 // Securely wipe passwords from memory
                 sudoPassword = '';
                 vpnPassword = '';
@@ -511,6 +537,17 @@ export class VpnService {
                 this._currentProcess.stdout.on('data', (data) => {
                     const output = data.toString();
                     this._logger.log(`VPN output: ${output.trim()}`);
+                    
+                    // Check for SAML authentication URL and auto-open browser
+                    if (useSaml) {
+                        // Look for SAML login URL patterns
+                        const urlMatch = output.match(/(https?:\/\/[^\s]+)/i);
+                        if (urlMatch && urlMatch[1] && (output.includes('authenticate') || output.includes('login') || output.includes('saml') || output.includes('Please'))) {
+                            const authUrl = urlMatch[1];
+                            this._logger.log(`Opening SAML authentication URL in browser: ${authUrl}`, true);
+                            vscode.env.openExternal(vscode.Uri.parse(authUrl));
+                        }
+                    }
                     
                     // Check for successful connection
                     if (output.includes('Tunnel is up and running')) {

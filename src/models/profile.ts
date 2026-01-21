@@ -9,6 +9,7 @@ export interface VpnProfile {
     username: string;
     isActive?: boolean;
     trustedCert?: string;  // SHA256 digest of trusted gateway certificate
+    useSamlLogin?: boolean;  // Use SAML SSO authentication instead of password
 }
 
 /**
