@@ -367,8 +367,9 @@ export class VpnService {
             await new Promise(resolve => setTimeout(resolve, 1000));
             
             // Reconnect with the updated profile
+            // Use isReconnectAttempt=false to allow fetching saved passwords
             this._logger.log('Reconnecting with trusted certificate...', true);
-            await this.connect(updatedProfile, isReconnectAttempt);
+            await this.connect(updatedProfile, false);
             
         } catch (error) {
             this._logger.error('Failed to save certificate to profile', error);
@@ -520,16 +521,14 @@ export class VpnService {
                 stdio: ['pipe', 'pipe', 'pipe']
             });
             
-            // Pass passwords to stdin
+            // Track if we've sent the VPN password
+            let vpnPasswordSent = false;
+            
+            // Pass sudo password to stdin immediately (sudo -S reads from stdin right away)
             if (this._currentProcess.stdin && sudoPassword) {
                 this._currentProcess.stdin.write(sudoPassword + '\n');
-                // For non-SAML, also send VPN password
-                if (!useSaml && vpnPassword) {
-                    this._currentProcess.stdin.write(vpnPassword + '\n');
-                }
-                // Securely wipe passwords from memory
+                // Securely wipe sudo password from memory
                 sudoPassword = '';
-                vpnPassword = '';
             }
             
             // Process stdout
@@ -537,6 +536,53 @@ export class VpnService {
                 this._currentProcess.stdout.on('data', (data) => {
                     const output = data.toString();
                     this._logger.log(`VPN output: ${output.trim()}`);
+                    
+                    // Check for VPN password prompt and send password
+                    if (!vpnPasswordSent && !useSaml && vpnPassword && 
+                        (output.toLowerCase().includes('password:') || output.toLowerCase().includes('vpn account'))) {
+                        if (this._currentProcess?.stdin) {
+                            this._currentProcess.stdin.write(vpnPassword + '\n');
+                            vpnPasswordSent = true;
+                            // Securely wipe VPN password from memory
+                            vpnPassword = '';
+                            this._logger.log('VPN password sent');
+                        }
+                    }
+                    
+                    // Check for certificate validation error in stdout
+                    if (output.includes('Gateway certificate validation failed') && !this._awaitingCertTrust) {
+                        // Try multiple patterns to extract the hash
+                        let certHash: string | null = null;
+                        
+                        // Pattern 1: --trusted-cert followed by hash
+                        const trustedCertMatch = output.match(/--trusted-cert\s+([a-f0-9]{64})/i);
+                        if (trustedCertMatch && trustedCertMatch[1]) {
+                            certHash = trustedCertMatch[1];
+                        }
+                        
+                        // Pattern 2: sha256 digest on same line
+                        if (!certHash) {
+                            const digestMatch = output.match(/sha256 digest:\s*([a-f0-9]{64})/i);
+                            if (digestMatch && digestMatch[1]) {
+                                certHash = digestMatch[1];
+                            }
+                        }
+                        
+                        // Pattern 3: standalone 64-char hex string (last resort)
+                        if (!certHash) {
+                            const hexMatch = output.match(/\b([a-f0-9]{64})\b/i);
+                            if (hexMatch && hexMatch[1]) {
+                                certHash = hexMatch[1];
+                            }
+                        }
+                        
+                        if (certHash) {
+                            this._pendingCertHash = certHash;
+                            this._awaitingCertTrust = true;
+                            this._logger.log(`Certificate hash detected: ${this._pendingCertHash}`);
+                            this.promptCertificateTrust(profile, isReconnectAttempt);
+                        }
+                    }
                     
                     // Check for SAML authentication URL and auto-open browser
                     if (useSaml) {
