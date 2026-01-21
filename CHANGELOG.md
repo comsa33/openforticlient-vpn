@@ -2,12 +2,14 @@
 
 All notable changes to the "openfortivpn-connector" extension will be documented in this file.
 
-## [Unreleased]
-- **Future Features**
-  - Support for Windows OS
-  - Splitting tunneling support
-  - Management of trusted certificates
-  - Integration with other VPN services
+## [1.3.0] - 2026-01-21
+
+### Added
+- Automatic trusted certificate detection and trust prompt
+- Pre-commit hooks with Husky + lint-staged
+
+### Fixed
+- Gateway certificate validation error handling
 
 ## [1.2.1] - 2025-04-26
 ### Changed
