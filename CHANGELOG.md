@@ -2,7 +2,7 @@
 
 All notable changes to the "openfortivpn-connector" extension will be documented in this file.
 
-## [1.3.0] - 2026-01-21
+## [1.3.1] - 2026-01-21
 
 ### Added
 - Automatic trusted certificate detection and trust prompt
