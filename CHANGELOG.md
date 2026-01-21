@@ -7,9 +7,11 @@ All notable changes to the "openfortivpn-connector" extension will be documented
 ### Added
 - Automatic trusted certificate detection and trust prompt
 - Pre-commit hooks with Husky + lint-staged
+- Separate sudo password and VPN password storage with clear prompts
 
 ### Fixed
 - Gateway certificate validation error handling
+- Password handling for systems requiring both sudo and VPN passwords
 
 ## [1.2.1] - 2025-04-26
 ### Changed

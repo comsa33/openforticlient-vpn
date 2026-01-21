@@ -9,6 +9,7 @@ import { MetricsService } from './metricsService';
  * Password key for SecretStorage
  */
 const VPN_PASSWORD_KEY_PREFIX = 'openfortivpn-password-';
+const SUDO_PASSWORD_KEY = 'openfortivpn-sudo-password';
 
 /**
  * VPN Auto-Reconnect States
@@ -410,36 +411,65 @@ export class VpnService {
         
         this._logger.log(`${isReconnectAttempt ? 'Reconnecting' : 'Connecting'} to VPN using profile "${profile.name}" (${profile.host}:${profile.port})...`);
         
-        // Get saved password for this profile
-        let password = await this.context.secrets.get(this.getPasswordKey(profile.id));
+        // Get saved sudo password
+        let sudoPassword = await this.context.secrets.get(SUDO_PASSWORD_KEY);
         
-        // If no saved password, ask for it (only for manual connections)
-        if (!password && !isReconnectAttempt) {
-            this._logger.log('No saved password found, prompting for password...');
-            password = await vscode.window.showInputBox({
-                prompt: `Enter VPN password for profile "${profile.name}"`,
-                password: true
+        // If no saved sudo password, ask for it (only for manual connections)
+        if (!sudoPassword && !isReconnectAttempt) {
+            this._logger.log('No saved sudo password found, prompting...');
+            sudoPassword = await vscode.window.showInputBox({
+                prompt: 'Enter your Mac/Linux system password (for sudo)',
+                password: true,
+                placeHolder: 'System password'
             });
             
-            if (!password) {
-                this._logger.log('Password entry canceled by user');
-                return false; // User canceled
+            if (!sudoPassword) {
+                this._logger.log('Sudo password entry canceled by user');
+                return false;
             }
             
-            // Ask if user wants to save this password
-            const savePassword = await vscode.window.showQuickPick(['Yes', 'No'], {
-                placeHolder: 'Save this password for future connections?'
+            // Save sudo password
+            const saveSudoPassword = await vscode.window.showQuickPick(['Yes', 'No'], {
+                placeHolder: 'Save system password for future connections?'
             });
             
-            if (savePassword === 'Yes') {
-                await this.context.secrets.store(this.getPasswordKey(profile.id), password);
-                this._logger.log('Password saved for future connections.');
+            if (saveSudoPassword === 'Yes') {
+                await this.context.secrets.store(SUDO_PASSWORD_KEY, sudoPassword);
+                this._logger.log('System password saved.');
             }
         }
         
-        // Cannot proceed with auto-reconnect if no password is available
-        if (!password && isReconnectAttempt) {
-            this._logger.log('Auto-reconnect failed: No saved password for this profile');
+        // Get saved VPN password for this profile
+        let vpnPassword = await this.context.secrets.get(this.getPasswordKey(profile.id));
+        
+        // If no saved VPN password, ask for it (only for manual connections)
+        if (!vpnPassword && !isReconnectAttempt) {
+            this._logger.log('No saved VPN password found, prompting...');
+            vpnPassword = await vscode.window.showInputBox({
+                prompt: `Enter VPN password for profile "${profile.name}"`,
+                password: true,
+                placeHolder: 'VPN account password'
+            });
+            
+            if (!vpnPassword) {
+                this._logger.log('VPN password entry canceled by user');
+                return false;
+            }
+            
+            // Ask if user wants to save this password
+            const saveVpnPassword = await vscode.window.showQuickPick(['Yes', 'No'], {
+                placeHolder: 'Save VPN password for future connections?'
+            });
+            
+            if (saveVpnPassword === 'Yes') {
+                await this.context.secrets.store(this.getPasswordKey(profile.id), vpnPassword);
+                this._logger.log('VPN password saved.');
+            }
+        }
+        
+        // Cannot proceed with auto-reconnect if passwords are not available
+        if ((!sudoPassword || !vpnPassword) && isReconnectAttempt) {
+            this._logger.log('Auto-reconnect failed: Missing saved passwords');
             return false;
         }
         
@@ -467,11 +497,13 @@ export class VpnService {
                 stdio: ['pipe', 'pipe', 'pipe']
             });
             
-            // Pass password to stdin securely
-            if (this._currentProcess.stdin && password) {
-                this._currentProcess.stdin.write(password + '\n');
-                // Securely wipe password from memory
-                password = '';
+            // Pass both passwords to stdin: sudo password first, then VPN password
+            if (this._currentProcess.stdin && sudoPassword && vpnPassword) {
+                this._currentProcess.stdin.write(sudoPassword + '\n');
+                this._currentProcess.stdin.write(vpnPassword + '\n');
+                // Securely wipe passwords from memory
+                sudoPassword = '';
+                vpnPassword = '';
             }
             
             // Process stdout

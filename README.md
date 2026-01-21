@@ -31,6 +31,32 @@ OpenFortiVPN Connector is an extension that allows you to easily manage Fortinet
   - macOS: `brew install openfortivpn`
 - Administrator privileges (sudo) are required
 
+### Passwordless Sudo Setup (Optional, Advanced)
+
+If you prefer not to enter your system password each time, you can configure passwordless sudo:
+
+**macOS (Homebrew):**
+```bash
+sudo visudo -f /etc/sudoers.d/openfortivpn
+```
+
+Add this line:
+```
+%admin ALL=(ALL) NOPASSWD: /opt/homebrew/bin/openfortivpn
+```
+
+**Linux:**
+```bash
+sudo visudo -f /etc/sudoers.d/openfortivpn
+```
+
+Add this line:
+```
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/openfortivpn
+```
+
+> **Note**: Without this setup, the extension will ask for your system password on first connection and save it securely.
+
 ## Installation
 
 Install by searching for "OpenFortiVPN Connector" in the VS Code extension marketplace or download directly from the [Visual Studio Code Marketplace](https://marketplace.visualstudio.com/items?itemName=RuoLee.openfortivpn-connector).
