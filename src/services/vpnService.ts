@@ -880,6 +880,12 @@ export class VpnService {
                 // If ppp0 interface exists, VPN is connected
                 this._isConnecting = false;
                 
+                // Skip auto-detection of connection if user manually disconnected
+                // (ppp0 interface might still exist briefly after disconnect command)
+                if (this._lastDisconnectWasManual) {
+                    return; // Don't treat as connected if user just disconnected
+                }
+                
                 if (!this._isConnected) {
                     this._isConnected = true;
                     this.updateStatusBar();

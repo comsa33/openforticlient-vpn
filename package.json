@@ -239,7 +239,7 @@
       "view/item/context": [
         {
           "command": "openfortivpn-connector.connectProfile",
-          "when": "view == openfortivpnProfiles && viewItem == profile",
+          "when": "view == openfortivpnProfiles && viewItem =~ /^(profile|activeProfile|activeProfileReconnecting|activeProfileReconnectFailed)$/",
           "group": "inline@1"
         },
         {
