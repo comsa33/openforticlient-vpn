@@ -8,6 +8,7 @@ export interface VpnProfile {
     port: string;
     username: string;
     isActive?: boolean;
+    trustedCert?: string;  // SHA256 digest of trusted gateway certificate
 }
 
 /**

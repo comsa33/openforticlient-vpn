@@ -126,12 +126,23 @@ async function createProfile(profileManager: ProfileManager): Promise<VpnProfile
         return undefined; // User canceled
     }
     
+    // Get trusted certificate (optional)
+    const trustedCert = await vscode.window.showInputBox({
+        prompt: '(Optional) Enter the trusted gateway certificate SHA256 hash',
+        placeHolder: 'Leave empty to auto-detect on first connection'
+    });
+    
+    if (trustedCert === undefined) {
+        return undefined; // User canceled
+    }
+    
     // Create the profile
     const profile = await profileManager.createProfile({
         name,
         host,
         port,
-        username
+        username,
+        trustedCert: trustedCert || undefined
     });
     
     vscode.window.showInformationMessage(`VPN profile "${name}" has been created.`);
@@ -183,8 +194,19 @@ async function editProfile(profileManager: ProfileManager, profile: VpnProfile):
         return undefined; // User canceled
     }
     
+    // Get trusted certificate (optional)
+    const trustedCert = await vscode.window.showInputBox({
+        prompt: '(Optional) Trusted gateway certificate SHA256 hash',
+        value: profile.trustedCert || '',
+        placeHolder: 'Leave empty to auto-detect on next connection'
+    });
+    
+    if (trustedCert === undefined) {
+        return undefined; // User canceled
+    }
+    
     // Update the profile
-    const updatedProfile = { ...profile, name, host, port, username };
+    const updatedProfile = { ...profile, name, host, port, username, trustedCert: trustedCert || undefined };
     await profileManager.updateProfile(updatedProfile);
     
     vscode.window.showInformationMessage(`VPN profile "${name}" has been updated.`);

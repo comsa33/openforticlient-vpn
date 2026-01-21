@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as cp from 'child_process';
 import { VpnProfile } from '../models/profile';
+import { ProfileManager } from '../models/profileManager';
 import { LogService } from './logService';
 import { MetricsService } from './metricsService';
 
@@ -30,6 +31,7 @@ export class VpnService {
     private _currentProcess: cp.ChildProcess | null = null;
     private _logger: LogService;
     private _metricsService: MetricsService;
+    private _profileManager: ProfileManager | null = null;
     
     // Auto-reconnect properties
     private _reconnectTimer: NodeJS.Timeout | null = null;
@@ -38,6 +40,10 @@ export class VpnService {
     private _lastConnectedProfile: VpnProfile | null = null;
     private _lastDisconnectWasManual: boolean = false;
     private _configChangeListener: vscode.Disposable | null = null;
+    
+    // Certificate trust properties
+    private _pendingCertHash: string | null = null;
+    private _awaitingCertTrust: boolean = false;
     
     /**
      * Event that fires when VPN connection status changes
@@ -94,6 +100,13 @@ export class VpnService {
      */
     public get reconnectAttempts(): number {
         return this._reconnectAttempts;
+    }
+    
+    /**
+     * Set the profile manager reference for certificate trust updates
+     */
+    public setProfileManager(profileManager: ProfileManager): void {
+        this._profileManager = profileManager;
     }
     
     /**
@@ -268,6 +281,109 @@ export class VpnService {
     }
     
     /**
+     * Prompt user to trust the certificate and save it to the profile
+     */
+    private async promptCertificateTrust(profile: VpnProfile, isReconnectAttempt: boolean): Promise<void> {
+        if (!this._pendingCertHash) {
+            this._awaitingCertTrust = false;
+            return;
+        }
+        
+        const certHash = this._pendingCertHash;
+        const shortHash = certHash.substring(0, 16) + '...';
+        
+        this._logger.log(`Prompting user to trust certificate: ${shortHash}`);
+        
+        // Show trust dialog to user
+        const action = await vscode.window.showWarningMessage(
+            `The VPN gateway's SSL certificate is not trusted.\n\nDo you want to trust this certificate and save it to your profile?\n\nCertificate SHA256: ${shortHash}`,
+            { modal: true },
+            'Trust & Connect',
+            'View Full Hash',
+            'Cancel'
+        );
+        
+        if (action === 'View Full Hash') {
+            // Show full hash and ask again
+            const secondAction = await vscode.window.showWarningMessage(
+                `Full Certificate SHA256 Hash:\n\n${certHash}\n\nDo you want to trust this certificate?`,
+                { modal: true },
+                'Trust & Connect',
+                'Cancel'
+            );
+            
+            if (secondAction === 'Trust & Connect') {
+                await this.saveCertificateAndReconnect(profile, certHash, isReconnectAttempt);
+            } else {
+                this._logger.log('User declined to trust the certificate');
+                this.resetCertificateTrustState();
+            }
+        } else if (action === 'Trust & Connect') {
+            await this.saveCertificateAndReconnect(profile, certHash, isReconnectAttempt);
+        } else {
+            this._logger.log('User declined to trust the certificate');
+            this.resetCertificateTrustState();
+        }
+    }
+    
+    /**
+     * Save the certificate to the profile and reconnect
+     */
+    private async saveCertificateAndReconnect(profile: VpnProfile, certHash: string, isReconnectAttempt: boolean): Promise<void> {
+        if (!this._profileManager) {
+            this._logger.error('Cannot save certificate: ProfileManager not available');
+            this.resetCertificateTrustState();
+            return;
+        }
+        
+        try {
+            // Update the profile with the trusted certificate
+            const updatedProfile: VpnProfile = {
+                ...profile,
+                trustedCert: certHash
+            };
+            
+            await this._profileManager.updateProfile(updatedProfile);
+            this._logger.log(`Certificate saved to profile "${profile.name}"`, true);
+            
+            // Reset state
+            this.resetCertificateTrustState();
+            
+            // Kill current process if running
+            if (this._currentProcess) {
+                try {
+                    this._currentProcess.kill();
+                } catch (err) {
+                    // Ignore
+                }
+                this._currentProcess = null;
+            }
+            
+            this._isConnecting = false;
+            this._isConnected = false;
+            
+            // Wait a moment before reconnecting
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Reconnect with the updated profile
+            this._logger.log('Reconnecting with trusted certificate...', true);
+            await this.connect(updatedProfile, isReconnectAttempt);
+            
+        } catch (error) {
+            this._logger.error('Failed to save certificate to profile', error);
+            this.resetCertificateTrustState();
+        }
+    }
+    
+    /**
+     * Reset certificate trust state
+     */
+    private resetCertificateTrustState(): void {
+        this._pendingCertHash = null;
+        this._awaitingCertTrust = false;
+    }
+    
+    /**
      * Connect to VPN using the specified profile
      * @param profile VPN profile to connect with
      * @param isReconnectAttempt Whether this is a reconnection attempt
@@ -340,6 +456,12 @@ export class VpnService {
             const sudoCmd = 'sudo';
             const args = ['-S', 'openfortivpn', hostWithPort, '-u', profile.username];
             
+            // Add trusted certificate if available
+            if (profile.trustedCert) {
+                args.push('--trusted-cert', profile.trustedCert);
+                this._logger.log(`Using trusted certificate: ${profile.trustedCert.substring(0, 16)}...`);
+            }
+            
             // Create child process
             this._currentProcess = cp.spawn(sudoCmd, args, {
                 stdio: ['pipe', 'pipe', 'pipe']
@@ -382,11 +504,25 @@ export class VpnService {
             
             // Process stderr
             if (this._currentProcess.stderr) {
-                this._currentProcess.stderr.on('data', (data) => {
+                this._currentProcess.stderr.on('data', async (data) => {
                     const output = data.toString();
                     // Ignore password prompts (already sent via stdin)
                     if (!output.includes('password for') && !output.includes('[sudo]')) {
                         this._logger.log(`VPN error: ${output.trim()}`);
+                        
+                        // Check for certificate validation error
+                        if (output.includes('Gateway certificate validation failed') && !this._awaitingCertTrust) {
+                            // Extract the certificate hash from the error message
+                            const certHashMatch = output.match(/sha256 digest:\s*([a-f0-9]{64})/i);
+                            if (certHashMatch && certHashMatch[1]) {
+                                this._pendingCertHash = certHashMatch[1];
+                                this._awaitingCertTrust = true;
+                                this._logger.log(`Certificate hash detected: ${this._pendingCertHash}`);
+                                
+                                // Prompt user to trust the certificate
+                                await this.promptCertificateTrust(profile, isReconnectAttempt);
+                            }
+                        }
                     }
                 });
             }

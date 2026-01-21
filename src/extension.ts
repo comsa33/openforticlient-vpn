@@ -32,6 +32,7 @@ export async function activate(context: vscode.ExtensionContext) {
     
     // Initialize VPN service
     const vpnService = new VpnService(context, statusBarItem);
+    vpnService.setProfileManager(profileManager);
     
     // Initialize schedule service
     const scheduleService = ScheduleService.getInstance(context, profileManager, vpnService);
