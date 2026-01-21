@@ -2,6 +2,11 @@
 
 All notable changes to the "openfortivpn-connector" extension will be documented in this file.
 
+## [1.4.1] - 2026-01-21
+
+### Fixed
+- VPN disconnect now correctly uses saved sudo password instead of VPN password
+
 ## [1.4.0] - 2026-01-21
 
 ### Added

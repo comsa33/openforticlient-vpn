@@ -666,32 +666,37 @@ export class VpnService {
         this._logger.log(`${isManualDisconnect ? 'Manually disconnecting' : 'Disconnecting'} VPN...`);
         
         try {
-            // Get active profile
-            const activeProfile = await vscode.commands.executeCommand<VpnProfile>('openfortivpn-connector.getActiveProfile');
+            // Get saved sudo password (disconnect requires sudo, not VPN password)
+            let password = await this.context.secrets.get(SUDO_PASSWORD_KEY);
             
-            let password;
-            if (activeProfile) {
-                // Try to get saved password for active profile
-                password = await this.context.secrets.get(this.getPasswordKey(activeProfile.id));
-            }
-            
-            // If no saved password or no active profile, ask for it (only for manual disconnects)
+            // If no saved sudo password, ask for it (only for manual disconnects)
             if (!password && isManualDisconnect) {
-                this._logger.log('No saved password found for disconnection, prompting for sudo password...');
+                this._logger.log('No saved sudo password found for disconnection, prompting...');
                 password = await vscode.window.showInputBox({
-                    prompt: 'Enter sudo password to disconnect VPN',
-                    password: true
+                    prompt: 'Enter your Mac/Linux system password (for sudo)',
+                    password: true,
+                    placeHolder: 'System password'
                 });
                 
                 if (!password) {
                     this._logger.log('Password entry canceled by user');
                     return false; // User canceled
                 }
+                
+                // Save sudo password for future use
+                const saveSudoPassword = await vscode.window.showQuickPick(['Yes', 'No'], {
+                    placeHolder: 'Save system password for future use?'
+                });
+                
+                if (saveSudoPassword === 'Yes') {
+                    await this.context.secrets.store(SUDO_PASSWORD_KEY, password);
+                    this._logger.log('System password saved.');
+                }
             }
             
             // For auto-disconnect with no saved password, we can't proceed
             if (!password && !isManualDisconnect) {
-                this._logger.error('Cannot auto-disconnect: No saved password');
+                this._logger.error('Cannot auto-disconnect: No saved sudo password');
                 return false;
             }
             
