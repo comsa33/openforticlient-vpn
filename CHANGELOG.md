@@ -2,6 +2,18 @@
 
 All notable changes to the "openfortivpn-connector" extension will be documented in this file.
 
+## [1.4.3] - 2026-06-15
+
+### Fixed
+- SAML SSO connection no longer fails with the gateway web portal page
+  ("tunnel mode use only / FortiClient required"). The auth URL is now
+  extracted without the trailing quote so the `redirect` parameter stays
+  intact (#7).
+- SAML auth URL is parsed safely when split across stdout chunks, and the
+  browser is opened exactly once.
+- Auth URL is surfaced with copy / incognito guidance, and browser-open
+  failures are handled gracefully.
+
 ## [1.4.2] - 2026-01-21
 
 ### Added
