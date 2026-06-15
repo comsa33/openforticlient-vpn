@@ -384,7 +384,88 @@ export class VpnService {
         this._pendingCertHash = null;
         this._awaitingCertTrust = false;
     }
-    
+
+    /**
+     * Extract the SAML authentication URL from a single line of openfortivpn
+     * output. Returns null when the line does not contain an auth URL.
+     *
+     * openfortivpn prints the URL wrapped in quotes, e.g.
+     *   Authenticate at 'https://gw.example.com/remote/saml/start?redirect=1'
+     * The previous implementation matched everything up to the next whitespace,
+     * which captured the trailing quote (".../redirect=1'"). That broke the
+     * `redirect` query parameter, so the gateway ignored it and served its web
+     * portal page ("tunnel mode use only / FortiClient required") instead of
+     * starting the SAML flow (issue #7).
+     *
+     * @param text Output to scan (a single line, or the residual buffer).
+     * @param requireTerminator When true, only a quote-terminated URL is
+     *   accepted. The closing quote proves the URL was received in full, which
+     *   lets us safely parse an un-terminated residual buffer without risking a
+     *   truncated URL.
+     */
+    private extractSamlAuthUrl(text: string, requireTerminator: boolean): string | null {
+        // Only consider output that looks like an auth prompt to avoid opening
+        // unrelated URLs that may appear in logs.
+        if (!/authenticate|saml|\/remote\/|please|login/i.test(text)) {
+            return null;
+        }
+
+        // Preferred form: openfortivpn wraps the URL in quotes. The closing
+        // quote guarantees the URL is complete even without a trailing newline.
+        const quoted = text.match(/['"]\s*(https?:\/\/[^'"\s]+)\s*['"]/i);
+        if (quoted && quoted[1]) {
+            return quoted[1];
+        }
+
+        // Without a closing quote we cannot tell a complete URL from one that is
+        // still streaming in, so a partial buffer must wait for more data.
+        if (requireTerminator) {
+            return null;
+        }
+
+        const match = text.match(/https?:\/\/[^\s]+/i);
+        if (!match) {
+            return null;
+        }
+
+        let url = match[0];
+        // Strip wrapping/trailing punctuation that openfortivpn (or a log
+        // formatter) may place around the URL: quotes, brackets, angle
+        // brackets, and sentence punctuation.
+        url = url.replace(/^['"<(\[]+/, '');
+        url = url.replace(/['"'`.,;>)\]]+$/, '');
+
+        return url.length > 0 ? url : null;
+    }
+
+    /**
+     * Open the SAML authentication URL in the browser and guide the user. The
+     * URL is opened in the system default browser; when the user already has an
+     * identity-provider session there (e.g. Microsoft), the gateway flow can
+     * fail, so we also surface the URL with copy/incognito guidance (issue #7).
+     */
+    private async handleSamlAuthentication(authUrl: string): Promise<void> {
+        this._logger.log(`Opening SAML authentication URL in browser: ${authUrl}`, true);
+        await vscode.env.openExternal(vscode.Uri.parse(authUrl));
+
+        const copyAction = 'Copy URL';
+        const openAction = 'Open Again';
+        const choice = await vscode.window.showInformationMessage(
+            'SAML sign-in opened in your browser. If authentication fails because ' +
+            'you are already signed in (e.g. Microsoft), copy the URL and open it ' +
+            'in a private/incognito window instead.',
+            copyAction,
+            openAction
+        );
+
+        if (choice === copyAction) {
+            await vscode.env.clipboard.writeText(authUrl);
+            vscode.window.showInformationMessage('SAML authentication URL copied to clipboard.');
+        } else if (choice === openAction) {
+            await vscode.env.openExternal(vscode.Uri.parse(authUrl));
+        }
+    }
+
     /**
      * Connect to VPN using the specified profile
      * @param profile VPN profile to connect with
@@ -523,6 +604,13 @@ export class VpnService {
             
             // Track if we've sent the VPN password
             let vpnPasswordSent = false;
+
+            // SAML auth state: ensure the browser is opened exactly once with a
+            // complete URL. stdout arrives in arbitrary chunks, so we buffer it
+            // and only parse fully terminated lines to avoid acting on a
+            // truncated URL.
+            let samlAuthOpened = false;
+            let samlStdoutBuffer = '';
             
             // Pass sudo password to stdin immediately (sudo -S reads from stdin right away)
             if (this._currentProcess.stdin && sudoPassword) {
@@ -584,14 +672,48 @@ export class VpnService {
                         }
                     }
                     
-                    // Check for SAML authentication URL and auto-open browser
-                    if (useSaml) {
-                        // Look for SAML login URL patterns
-                        const urlMatch = output.match(/(https?:\/\/[^\s]+)/i);
-                        if (urlMatch && urlMatch[1] && (output.includes('authenticate') || output.includes('login') || output.includes('saml') || output.includes('Please'))) {
-                            const authUrl = urlMatch[1];
-                            this._logger.log(`Opening SAML authentication URL in browser: ${authUrl}`, true);
-                            vscode.env.openExternal(vscode.Uri.parse(authUrl));
+                    // Check for SAML authentication URL and open the browser.
+                    // openfortivpn prints the URL wrapped in quotes (e.g.
+                    // Authenticate at 'https://.../remote/saml/start?redirect=1').
+                    // We must extract it exactly: keeping a trailing quote breaks
+                    // the `redirect` parameter and the gateway falls back to its
+                    // web portal page instead of starting the SAML flow.
+                    if (useSaml && !samlAuthOpened) {
+                        samlStdoutBuffer += output;
+
+                        const openSamlAuth = (authUrl: string) => {
+                            samlAuthOpened = true;
+                            this.handleSamlAuthentication(authUrl).catch(err =>
+                                this._logger.log(`SAML authentication handling failed: ${err}`, true));
+                        };
+
+                        // Primary path: parse fully terminated lines so we never
+                        // act on a URL that was split across stdout chunks.
+                        let newlineIndex: number;
+                        while (!samlAuthOpened && (newlineIndex = samlStdoutBuffer.indexOf('\n')) >= 0) {
+                            const line = samlStdoutBuffer.slice(0, newlineIndex);
+                            samlStdoutBuffer = samlStdoutBuffer.slice(newlineIndex + 1);
+
+                            const authUrl = this.extractSamlAuthUrl(line, false);
+                            if (authUrl) {
+                                openSamlAuth(authUrl);
+                            }
+                        }
+
+                        // Fallback: openfortivpn may print the prompt and then
+                        // block on the SAML callback without a trailing newline.
+                        // A quote-terminated URL in the residual buffer is known
+                        // to be complete, so open it without waiting for '\n'.
+                        if (!samlAuthOpened) {
+                            const authUrl = this.extractSamlAuthUrl(samlStdoutBuffer, true);
+                            if (authUrl) {
+                                openSamlAuth(authUrl);
+                            }
+                        }
+
+                        // Guard against unbounded growth if no newline ever comes.
+                        if (samlStdoutBuffer.length > 8192) {
+                            samlStdoutBuffer = samlStdoutBuffer.slice(-4096);
                         }
                     }
                     
