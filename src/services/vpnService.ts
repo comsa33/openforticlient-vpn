@@ -4,6 +4,7 @@ import { VpnProfile } from '../models/profile';
 import { ProfileManager } from '../models/profileManager';
 import { LogService } from './logService';
 import { MetricsService } from './metricsService';
+import { scanSamlAuthOutput } from '../utils/samlAuth';
 
 /**
  * Password key for SecretStorage
@@ -384,7 +385,48 @@ export class VpnService {
         this._pendingCertHash = null;
         this._awaitingCertTrust = false;
     }
-    
+
+    /**
+     * Open the SAML authentication URL in the browser and guide the user. The
+     * URL is opened in the system default browser; when the user already has an
+     * identity-provider session there (e.g. Microsoft), the gateway flow can
+     * fail, so we also surface the URL with copy/incognito guidance (issue #7).
+     */
+    private async handleSamlAuthentication(authUrl: string): Promise<void> {
+        this._logger.log(`Opening SAML authentication URL in browser: ${authUrl}`, true);
+
+        let opened = false;
+        try {
+            opened = await vscode.env.openExternal(vscode.Uri.parse(authUrl));
+        } catch (err) {
+            this._logger.error('Failed to open SAML authentication URL automatically', err, false);
+        }
+
+        const copyAction = 'Copy URL';
+        const openAction = 'Open Again';
+        // Always surface the URL so the user can fall back to copying it,
+        // especially when the automatic open failed or an existing identity
+        // provider session in the default browser breaks the flow.
+        const message = opened
+            ? 'SAML sign-in opened in your browser. If authentication fails because ' +
+              'you are already signed in (e.g. Microsoft), copy the URL and open it ' +
+              'in a private/incognito window instead.'
+            : 'Could not open SAML sign-in automatically. Copy the URL and open it ' +
+              'in your browser manually.';
+        const choice = await vscode.window.showInformationMessage(message, copyAction, openAction);
+
+        if (choice === copyAction) {
+            await vscode.env.clipboard.writeText(authUrl);
+            vscode.window.showInformationMessage('SAML authentication URL copied to clipboard.');
+        } else if (choice === openAction) {
+            try {
+                await vscode.env.openExternal(vscode.Uri.parse(authUrl));
+            } catch (err) {
+                this._logger.error('Failed to open SAML authentication URL', err);
+            }
+        }
+    }
+
     /**
      * Connect to VPN using the specified profile
      * @param profile VPN profile to connect with
@@ -523,6 +565,13 @@ export class VpnService {
             
             // Track if we've sent the VPN password
             let vpnPasswordSent = false;
+
+            // SAML auth state: ensure the browser is opened exactly once with a
+            // complete URL. stdout arrives in arbitrary chunks, so we buffer it
+            // and only parse fully terminated lines to avoid acting on a
+            // truncated URL.
+            let samlAuthOpened = false;
+            let samlStdoutBuffer = '';
             
             // Pass sudo password to stdin immediately (sudo -S reads from stdin right away)
             if (this._currentProcess.stdin && sudoPassword) {
@@ -584,14 +633,19 @@ export class VpnService {
                         }
                     }
                     
-                    // Check for SAML authentication URL and auto-open browser
-                    if (useSaml) {
-                        // Look for SAML login URL patterns
-                        const urlMatch = output.match(/(https?:\/\/[^\s]+)/i);
-                        if (urlMatch && urlMatch[1] && (output.includes('authenticate') || output.includes('login') || output.includes('saml') || output.includes('Please'))) {
-                            const authUrl = urlMatch[1];
-                            this._logger.log(`Opening SAML authentication URL in browser: ${authUrl}`, true);
-                            vscode.env.openExternal(vscode.Uri.parse(authUrl));
+                    // Check for SAML authentication URL and open the browser.
+                    // openfortivpn prints the URL wrapped in quotes (e.g.
+                    // Authenticate at 'https://.../remote/saml/start?redirect=1').
+                    // We must extract it exactly: keeping a trailing quote breaks
+                    // the `redirect` parameter and the gateway falls back to its
+                    // web portal page instead of starting the SAML flow.
+                    if (useSaml && !samlAuthOpened) {
+                        const scan = scanSamlAuthOutput(samlStdoutBuffer, output);
+                        samlStdoutBuffer = scan.buffer;
+                        if (scan.url) {
+                            samlAuthOpened = true;
+                            this.handleSamlAuthentication(scan.url).catch(err =>
+                                this._logger.error('SAML authentication handling failed', err));
                         }
                     }
                     
