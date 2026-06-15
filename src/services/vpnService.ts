@@ -446,23 +446,36 @@ export class VpnService {
      */
     private async handleSamlAuthentication(authUrl: string): Promise<void> {
         this._logger.log(`Opening SAML authentication URL in browser: ${authUrl}`, true);
-        await vscode.env.openExternal(vscode.Uri.parse(authUrl));
+
+        let opened = false;
+        try {
+            opened = await vscode.env.openExternal(vscode.Uri.parse(authUrl));
+        } catch (err) {
+            this._logger.error('Failed to open SAML authentication URL automatically', err, false);
+        }
 
         const copyAction = 'Copy URL';
         const openAction = 'Open Again';
-        const choice = await vscode.window.showInformationMessage(
-            'SAML sign-in opened in your browser. If authentication fails because ' +
-            'you are already signed in (e.g. Microsoft), copy the URL and open it ' +
-            'in a private/incognito window instead.',
-            copyAction,
-            openAction
-        );
+        // Always surface the URL so the user can fall back to copying it,
+        // especially when the automatic open failed or an existing identity
+        // provider session in the default browser breaks the flow.
+        const message = opened
+            ? 'SAML sign-in opened in your browser. If authentication fails because ' +
+              'you are already signed in (e.g. Microsoft), copy the URL and open it ' +
+              'in a private/incognito window instead.'
+            : 'Could not open SAML sign-in automatically. Copy the URL and open it ' +
+              'in your browser manually.';
+        const choice = await vscode.window.showInformationMessage(message, copyAction, openAction);
 
         if (choice === copyAction) {
             await vscode.env.clipboard.writeText(authUrl);
             vscode.window.showInformationMessage('SAML authentication URL copied to clipboard.');
         } else if (choice === openAction) {
-            await vscode.env.openExternal(vscode.Uri.parse(authUrl));
+            try {
+                await vscode.env.openExternal(vscode.Uri.parse(authUrl));
+            } catch (err) {
+                this._logger.error('Failed to open SAML authentication URL', err);
+            }
         }
     }
 
@@ -684,7 +697,7 @@ export class VpnService {
                         const openSamlAuth = (authUrl: string) => {
                             samlAuthOpened = true;
                             this.handleSamlAuthentication(authUrl).catch(err =>
-                                this._logger.log(`SAML authentication handling failed: ${err}`, true));
+                                this._logger.error('SAML authentication handling failed', err));
                         };
 
                         // Primary path: parse fully terminated lines so we never
